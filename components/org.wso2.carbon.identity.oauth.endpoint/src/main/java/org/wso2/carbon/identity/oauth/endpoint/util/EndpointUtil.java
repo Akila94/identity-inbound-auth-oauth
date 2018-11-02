@@ -52,9 +52,9 @@ import org.wso2.carbon.identity.oauth.endpoint.message.OAuthMessage;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.OAuth2Service;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
-import org.wso2.carbon.identity.openidconnect.RequestObjectService;
 import org.wso2.carbon.identity.oauth2.model.OAuth2Parameters;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
+import org.wso2.carbon.identity.openidconnect.RequestObjectService;
 import org.wso2.carbon.identity.webfinger.DefaultWebFingerProcessor;
 import org.wso2.carbon.identity.webfinger.WebFingerProcessor;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
@@ -489,18 +489,9 @@ public class EndpointUtil {
         String consentPage = null;
         String sessionDataKeyConsent = UUID.randomUUID().toString();
         try {
-            if (entry == null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Cache Entry is Null from SessionDataCache ");
-                }
-            } else {
-                entry.setValidityPeriod(TimeUnit.MINUTES.toNanos(IdentityUtil.getTempDataCleanUpTimeout()));
-                sessionDataCache.addToCache(new SessionDataCacheKey(sessionDataKeyConsent),entry);
-                if (entry.getQueryString() != null) {
-                    queryString = URLEncoder.encode(entry.getQueryString(), UTF_8);
-                }
+            if (entry != null && entry.getQueryString() != null) {
+                queryString = URLEncoder.encode(entry.getQueryString(), UTF_8);
             }
-
 
             if (isOIDC) {
                 consentPage = OAuth2Util.OAuthURL.getOIDCConsentPageUrl();
@@ -521,6 +512,19 @@ public class EndpointUtil {
                 consentPage = consentPage + "&" + OAuthConstants.OAuth20Params.SCOPE + "=" + URLEncoder.encode
                         (EndpointUtil.getScope(params), UTF_8) + "&" + OAuthConstants.SESSION_DATA_KEY_CONSENT
                         + "=" + URLEncoder.encode(sessionDataKeyConsent, UTF_8) + "&spQueryParams=" + queryString;
+
+                if (entry != null) {
+
+                    consentPage = FrameworkUtils.getRedirectURLWithFilteredParams(consentPage,
+                            entry.getEndpointParams());
+                    entry.setValidityPeriod(TimeUnit.MINUTES.toNanos(IdentityUtil.getTempDataCleanUpTimeout()));
+                    sessionDataCache.addToCache(new SessionDataCacheKey(sessionDataKeyConsent), entry);
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Cache Entry is Null from SessionDataCache.");
+                    }
+                }
+
             } else {
                 throw new OAuthSystemException("Error while retrieving the application name");
             }
