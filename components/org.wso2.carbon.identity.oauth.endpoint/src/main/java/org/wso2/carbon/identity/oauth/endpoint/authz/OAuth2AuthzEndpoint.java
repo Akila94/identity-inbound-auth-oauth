@@ -1227,7 +1227,7 @@ public class OAuth2AuthzEndpoint {
     private boolean isNonceMandatory(String responseType) {
 
         /*
-        nonce parameter is required for the authorization grant types requesting ID_TOKEN.
+        nonce parameter is required for the OIDC hybrid flow and implicit flow grant types requesting ID_TOKEN.
          */
         return Arrays.stream(responseType.split("\\s+")).anyMatch(OAuthConstants.ID_TOKEN::equals);
     }
