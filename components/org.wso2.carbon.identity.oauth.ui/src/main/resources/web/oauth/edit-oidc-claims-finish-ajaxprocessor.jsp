@@ -27,6 +27,7 @@
 <%@ page import="org.wso2.carbon.utils.ServerConstants" %>
 <%@ page import="org.wso2.carbon.identity.oauth.ui.client.OAuthAdminClient" %>
 <%@ page import="static org.wso2.carbon.identity.oauth.ui.util.OAuthUIConstants.SCOPE_NAME" %>
+<%@ page import="org.owasp.encoder.Encode" %>
 %>
 <jsp:include page="../dialog/display_messages.jsp"/>
 
@@ -56,7 +57,7 @@
                 boolean isUpdate = Boolean.parseBoolean(request.getParameter("update"));
                 oAuthAdminClient.updateScope(scopeName, null, selectedClaims);
                 if (isUpdate) {
-                    forwardTo = "edit-oidc-claims.jsp?scopeName=" + scopeName;
+                    forwardTo = "edit-oidc-claims.jsp?scopeName=" + Encode.forUriComponent(scopeName);
                 } else {
                     forwardTo = "list-oidc-scopes.jsp";
                 }
