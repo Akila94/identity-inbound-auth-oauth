@@ -634,6 +634,14 @@ public class OIDCLogoutServlet extends HttpServlet {
         return spName;
     }
 
+    /**
+     * Gracefully handle logout requests that comes from already logged out users.
+     * Redirects user to the post_logout_redirect_uri or the successfully logged out page of the IS.
+     *
+     * @param request Http servlet request
+     * @param response Http servlet response
+     * @throws IOException
+     */
     private void handleMissingSessionStateGracefully(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
