@@ -148,6 +148,7 @@ public class OAuth2Util {
     public static final String ENABLE_OPENID_CONNECT_AUDIENCES = "EnableAudiences";
     public static final String OPENID_CONNECT_AUDIENCE = "audience";
     private static final String DOT_SEPARATER = ".";
+    private static final String IDP_ENTITY_ID = "IdPEntityId";
 
     public static final String DEFAULT_TOKEN_TYPE = "Default";
 
@@ -485,7 +486,8 @@ public class OAuth2Util {
      * @return Username of the user which own client id and client secret if authentication is
      * successful. Empty string otherwise.
      * @throws IdentityOAuthAdminException Error when looking up the credentials from the database
-     * @deprecated Authenticate the OAuth consumer and return the username of user which own the provided client id and client
+     * @deprecated Authenticate the OAuth consumer and return the username of user which own the provided client id
+     * and client
      * secret.
      */
     public static String getAuthenticatedUsername(String clientId, String clientSecretProvided)
@@ -612,7 +614,8 @@ public class OAuth2Util {
 
     public static Map<String, String> getAvailableUserStoreDomainMappings() throws
             IdentityOAuth2Exception {
-        //TreeMap is used to ignore the case sensitivity of key. Because when user logged in, the case of the user name is ignored.
+        //TreeMap is used to ignore the case sensitivity of key. Because when user logged in, the case of the user
+        // name is ignored.
         Map<String, String> userStoreDomainMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
         String domainsStr = getAccessTokenPartitioningDomains();
         if (domainsStr != null) {
@@ -824,8 +827,9 @@ public class OAuth2Util {
             String[] strArr = userId.split(UserCoreConstants.DOMAIN_SEPARATOR);
             if (strArr != null && strArr.length > 1) {
                 userStore = strArr[0];
-                accessTokenStoreTable = OAuth2Util.getPartitionedTableByUserStore(OAuthConstants.ACCESS_TOKEN_STORE_TABLE,
-                        userStore);
+                accessTokenStoreTable =
+                        OAuth2Util.getPartitionedTableByUserStore(OAuthConstants.ACCESS_TOKEN_STORE_TABLE,
+                                userStore);
             }
         }
         return accessTokenStoreTable;
@@ -1085,16 +1089,19 @@ public class OAuth2Util {
             return oauth2TokenEPUrl;
         }
 
-        public static String getOidcDiscoveryEPUrl(String tenantDomain) throws URISyntaxException {
+        public static String getOidcDiscoveryEPUrl(String tenantDomain)
+                throws URISyntaxException {
 
             String oidcDiscoveryEPUrl = OAuthServerConfiguration.getInstance().getOidcDiscoveryUrl();
             if (StringUtils.isBlank(oidcDiscoveryEPUrl)) {
-                oidcDiscoveryEPUrl = IdentityUtil.getServerURL("/oauth2/oidcdiscovery", true, false);
+                oidcDiscoveryEPUrl = IdentityUtil.getServerURL(
+                        "/oauth2/oidcdiscovery", true, false);
             }
             if (StringUtils.isNotBlank(tenantDomain) && !MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equals
                     (tenantDomain)) {
                 oidcDiscoveryEPUrl = getTenantUrl(oidcDiscoveryEPUrl, tenantDomain);
             }
+
             return oidcDiscoveryEPUrl;
         }
 
@@ -1241,7 +1248,8 @@ public class OAuth2Util {
             if (OAuthConstants.OAUTH_PKCE_PLAIN_CHALLENGE.equals(challenge_method)) {
                 //if the current application explicitly doesn't support plain, throw exception
                 if (!oAuthApp.isPkceSupportPlain()) {
-                    throw new IdentityOAuth2Exception("This application does not allow 'plain' transformation algorithm.");
+                    throw new IdentityOAuth2Exception("This application does not allow 'plain' transformation " +
+                            "algorithm.");
                 }
                 if (!referenceCodeChallenge.equals(verificationCode)) {
                     return false;
@@ -1429,9 +1437,12 @@ public class OAuth2Util {
                                         "  for application id : " + consumerKey);
                             }
                         } catch (NumberFormatException e) {
-                            String errorMsg = String.format("Invalid value provided as user access token expiry time for consumer key %s," +
-                                    " tenant id : %d. Given value: %s, Expected a long value", consumerKey, tenantId, spTimeObject
-                                    .get(USER_ACCESS_TOKEN_EXP_TIME_IN_MILLISECONDS).toString());
+                            String errorMsg = String.format("Invalid value provided as user access token expiry time " +
+                                            "for consumer key %s," +
+                                            " tenant id : %d. Given value: %s, Expected a long value", consumerKey,
+                                    tenantId,
+                                    spTimeObject
+                                            .get(USER_ACCESS_TOKEN_EXP_TIME_IN_MILLISECONDS).toString());
                             log.error(errorMsg, e);
                         }
                     } else {
@@ -1450,9 +1461,11 @@ public class OAuth2Util {
                                         "  for application id : " + consumerKey);
                             }
                         } catch (NumberFormatException e) {
-                            String errorMsg = String.format("Invalid value provided as application access token expiry time for " +
-                                    "consumer key %s, tenant id : %d. Given value: %s, Expected a long value ", consumerKey, tenantId, spTimeObject
-                                    .get(APPLICATION_ACCESS_TOKEN_EXP_TIME_IN_MILLISECONDS).toString());
+                            String errorMsg = String.format("Invalid value provided as application access token " +
+                                            "expiry time for " +
+                                            "consumer key %s, tenant id : %d. Given value: %s, Expected a long value ",
+                                    consumerKey, tenantId, spTimeObject
+                                            .get(APPLICATION_ACCESS_TOKEN_EXP_TIME_IN_MILLISECONDS).toString());
                             log.error(errorMsg, e);
                         }
                     } else {
@@ -1472,9 +1485,12 @@ public class OAuth2Util {
                             }
 
                         } catch (NumberFormatException e) {
-                            String errorMsg = String.format("Invalid value provided as refresh token expiry time for consumer key %s," +
-                                    " tenant id : %d. Given value: %s, Expected a long value", consumerKey, tenantId, spTimeObject
-                                    .get(REFRESH_TOKEN_EXP_TIME_IN_MILLISECONDS).toString());
+                            String errorMsg = String.format("Invalid value provided as refresh token expiry time for " +
+                                            "consumer key %s," +
+                                            " tenant id : %d. Given value: %s, Expected a long value", consumerKey,
+                                    tenantId,
+                                    spTimeObject
+                                            .get(REFRESH_TOKEN_EXP_TIME_IN_MILLISECONDS).toString());
                             log.error(errorMsg, e);
                         }
                     } else {
@@ -1500,7 +1516,7 @@ public class OAuth2Util {
      * @throws InvalidOAuthClientException
      */
     public static OauthTokenIssuer getOAuthTokenIssuerForOAuthApp(String clientId)
-            throws  IdentityOAuth2Exception, InvalidOAuthClientException {
+            throws IdentityOAuth2Exception, InvalidOAuthClientException {
 
         OAuthAppDO appDO = null;
         try {
@@ -1770,14 +1786,17 @@ public class OAuth2Util {
             log.warn("Error in OAuth Configuration. OAuth element is not available.");
             return isAudienceEnabled;
         }
-        OMElement configOpenIDConnect = oauthElem.getFirstChildWithName(new QName(IdentityCoreConstants.IDENTITY_DEFAULT_NAMESPACE, OPENID_CONNECT));
+        OMElement configOpenIDConnect =
+                oauthElem.getFirstChildWithName(new QName(IdentityCoreConstants.IDENTITY_DEFAULT_NAMESPACE,
+                        OPENID_CONNECT));
 
         if (configOpenIDConnect == null) {
             log.warn("Error in OAuth Configuration. OpenID element is not available.");
             return isAudienceEnabled;
         }
         OMElement configAudience = configOpenIDConnect.
-                getFirstChildWithName(new QName(IdentityCoreConstants.IDENTITY_DEFAULT_NAMESPACE, ENABLE_OPENID_CONNECT_AUDIENCES));
+                getFirstChildWithName(new QName(IdentityCoreConstants.IDENTITY_DEFAULT_NAMESPACE,
+                        ENABLE_OPENID_CONNECT_AUDIENCES));
 
         if (configAudience != null) {
             String configAudienceValue = configAudience.getText();
@@ -1822,7 +1841,8 @@ public class OAuth2Util {
             } else {
                 //It is not sending tenant domain with the subject in id_token by default, So to work this as
                 //expected, need to enable the option "Use tenant domain in local subject identifier" in SP config
-                tenantDomain = MultitenantUtils.getTenantDomain(SignedJWT.parse(idToken).getJWTClaimsSet().getSubject());
+                tenantDomain =
+                        MultitenantUtils.getTenantDomain(SignedJWT.parse(idToken).getJWTClaimsSet().getSubject());
             }
             if (StringUtils.isEmpty(tenantDomain)) {
                 return false;
@@ -2075,7 +2095,8 @@ public class OAuth2Util {
         }
     }
 
-    private static String getThumbPrint(Certificate certificate) throws NoSuchAlgorithmException, CertificateEncodingException {
+    private static String getThumbPrint(Certificate certificate) throws NoSuchAlgorithmException,
+            CertificateEncodingException {
         // Generate the SHA-1 thumbprint of the certificate.
         MessageDigest digestValue = MessageDigest.getInstance("SHA-1");
         byte[] der = certificate.getEncoded();
@@ -2102,7 +2123,8 @@ public class OAuth2Util {
             try {
                 IdentityTenantUtil.initializeRegistry(tenantId, tenantDomain);
             } catch (IdentityException e) {
-                throw new IdentityOAuth2Exception("Error occurred while loading registry for tenant " + tenantDomain, e);
+                throw new IdentityOAuth2Exception("Error occurred while loading registry for tenant " + tenantDomain,
+                        e);
             }
 
             // get tenant's key store manager
@@ -2405,7 +2427,7 @@ public class OAuth2Util {
      * Return true if the token identifier is JWT.
      *
      * @param tokenIdentifier String JWT token identifier.
-     * @return  true for a JWT token.
+     * @return true for a JWT token.
      */
     public static boolean isJWT(String tokenIdentifier) {
         // JWT token contains 3 base64 encoded components separated by periods.
@@ -2416,7 +2438,7 @@ public class OAuth2Util {
      * Return true if the JWT id token is encrypted.
      *
      * @param idToken String JWT ID token.
-     * @return  Boolean state of encryption.
+     * @return Boolean state of encryption.
      */
     public static boolean isIDTokenEncrypted(String idToken) {
         // Encrypted ID token contains 5 base64 encoded components separated by periods.
@@ -2500,6 +2522,7 @@ public class OAuth2Util {
      * @return true if supported
      */
     public static boolean isRequestParameterSupported() {
+
         return Boolean.TRUE;
     }
 
@@ -2509,6 +2532,7 @@ public class OAuth2Util {
      * @return true if supported
      */
     public static boolean isClaimsParameterSupported() {
+
         return Boolean.TRUE;
     }
 
@@ -2537,12 +2561,13 @@ public class OAuth2Util {
      * If given user store domain is of format FEDERATED:{federated-idp-name}, the authenticated user instance will
      * be flagged as a federated user.
      *
-     * @param username username of the user
+     * @param username        username of the user
      * @param userStoreDomain user store domain
-     * @param tenantDomain tenent domain
+     * @param tenantDomain    tenent domain
      * @return an instance of AuthenticatedUser{@link AuthenticatedUser}
      */
-    public static AuthenticatedUser createAuthenticatedUser(String username, String userStoreDomain, String tenantDomain) {
+    public static AuthenticatedUser createAuthenticatedUser(String username, String userStoreDomain,
+                                                            String tenantDomain) {
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setUserName(username);
@@ -2561,6 +2586,6 @@ public class OAuth2Util {
 
         return authenticatedUser;
     }
-    
+
 }
 
