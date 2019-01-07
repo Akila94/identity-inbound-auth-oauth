@@ -19,6 +19,7 @@
 package org.wso2.carbon.identity.discovery;
 
 import org.wso2.carbon.base.ServerConfigurationException;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -29,7 +30,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public interface OIDCProcessor {
     OIDProviderConfigResponse getResponse(HttpServletRequest request, String tenantDomain) throws
-            OIDCDiscoveryEndPointException, ServerConfigurationException;
+            OIDCDiscoveryEndPointException, ServerConfigurationException, IdentityOAuth2Exception;
 
     int handleError(OIDCDiscoveryEndPointException error);
 }
