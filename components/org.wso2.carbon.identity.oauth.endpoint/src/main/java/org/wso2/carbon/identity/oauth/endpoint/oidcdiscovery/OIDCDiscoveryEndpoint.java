@@ -61,7 +61,7 @@ public class OIDCDiscoveryEndpoint {
         if (StringUtils.isEmpty(tenantDomain)) {
             tenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
         }
-        if (isValidTokenEndpoint(tokenEp)) {
+        if (isValidIssuer(tokenEp)) {
             return this.getResponse(request, tenantDomain);
         } else {
             Response.ResponseBuilder errorResponse = Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -72,13 +72,13 @@ public class OIDCDiscoveryEndpoint {
         }
     }
 
-    private boolean isValidTokenEndpoint(String tokenEp) {
+    private boolean isValidIssuer(String issuer) {
 
-        if (TOKEN_ENDPOINT_VALUE_TOKEN.equals(tokenEp) || TOKEN_ENDPOINT_VALUE_OIDCDISCOVERY.equals(tokenEp)) {
+        if (TOKEN_ENDPOINT_VALUE_TOKEN.equals(issuer) || TOKEN_ENDPOINT_VALUE_OIDCDISCOVERY.equals(issuer)) {
             return true;
         }
         if (log.isDebugEnabled()) {
-            log.debug("Token endpoint validation failed. Token endpoint value: " + tokenEp + " must be either '"
+            log.debug("Token endpoint validation failed. Token endpoint value: " + issuer + " must be either '"
                     + TOKEN_ENDPOINT_VALUE_TOKEN + "' or '" + TOKEN_ENDPOINT_VALUE_OIDCDISCOVERY + "'");
         }
         return false;
