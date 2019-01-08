@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public interface OIDCProcessor {
     OIDProviderConfigResponse getResponse(HttpServletRequest request, String tenantDomain) throws
-            OIDCDiscoveryEndPointException, ServerConfigurationException, IdentityOAuth2Exception;
+            OIDCDiscoveryEndPointException, ServerConfigurationException;
 
     int handleError(OIDCDiscoveryEndPointException error);
 }
