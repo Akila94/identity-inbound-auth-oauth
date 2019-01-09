@@ -2574,6 +2574,7 @@ public class OAuth2Util {
     }
 
     public static String getIdTokenIssuer(String tenantDomain) throws IdentityOAuth2Exception {
+
         IdentityProvider identityProvider = getResidentIdp(tenantDomain);
         FederatedAuthenticatorConfig[] fedAuthnConfigs = identityProvider.getFederatedAuthenticatorConfigs();
         // Get OIDC authenticator
@@ -2585,11 +2586,11 @@ public class OAuth2Util {
     }
 
     private static IdentityProvider getResidentIdp(String tenantDomain) throws IdentityOAuth2Exception {
+
         try {
             return IdentityProviderManager.getInstance().getResidentIdP(tenantDomain);
         } catch (IdentityProviderManagementException e) {
-            final String ERROR_GET_RESIDENT_IDP = "Error while getting Resident Identity Provider of '%s' tenant.";
-            String errorMsg = String.format(ERROR_GET_RESIDENT_IDP, tenantDomain);
+            String errorMsg = String.format("Error while getting Resident Identity Provider of '%s' tenant.", tenantDomain);
             throw new IdentityOAuth2Exception(errorMsg, e);
         }
     }
