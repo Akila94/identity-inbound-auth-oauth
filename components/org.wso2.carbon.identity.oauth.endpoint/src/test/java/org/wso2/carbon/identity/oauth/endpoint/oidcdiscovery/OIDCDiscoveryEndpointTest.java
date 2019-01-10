@@ -38,6 +38,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -51,6 +52,9 @@ public class OIDCDiscoveryEndpointTest extends PowerMockIdentityBaseTest {
 
     @Mock
     HttpServletRequest httpServletRequest;
+
+    @Mock
+    UriInfo uriInfo;
 
     @Mock
     OIDProviderConfigResponse oidProviderConfigResponse;
@@ -112,7 +116,7 @@ public class OIDCDiscoveryEndpointTest extends PowerMockIdentityBaseTest {
         when(defaultOIDCProcessor.handleError(any(OIDCDiscoveryEndPointException.class)))
                 .thenReturn(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 
-        Response response = oidcDiscoveryEndpoint.getOIDProviderConfiguration(tokenEp, httpServletRequest);
+        Response response = oidcDiscoveryEndpoint.getOIDProviderConfiguration(tokenEp, httpServletRequest, uriInfo );
         Assert.assertEquals(expectedResponse, response.getStatus());
         threadLocalProperties.get().remove(OAuthConstants.TENANT_NAME_FROM_CONTEXT);
     }
