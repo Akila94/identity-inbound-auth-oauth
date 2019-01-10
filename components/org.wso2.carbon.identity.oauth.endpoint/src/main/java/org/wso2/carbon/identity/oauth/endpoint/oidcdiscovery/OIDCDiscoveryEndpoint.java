@@ -39,6 +39,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 @Path("/{issuer}/.well-known/openid-configuration")
 public class OIDCDiscoveryEndpoint {
@@ -50,7 +51,8 @@ public class OIDCDiscoveryEndpoint {
     @GET
     @Produces("application/json")
     public Response getOIDProviderConfiguration(
-            @PathParam("issuer") String discoveryEpPathComponent, @Context HttpServletRequest request) {
+            @PathParam("issuer") String discoveryEpPathComponent, @Context HttpServletRequest request,
+            @Context UriInfo uriInfo) {
 
         String tenantDomain = null;
         Object tenantObj = IdentityUtil.threadLocalProperties.get().get(OAuthConstants.TENANT_NAME_FROM_CONTEXT);
