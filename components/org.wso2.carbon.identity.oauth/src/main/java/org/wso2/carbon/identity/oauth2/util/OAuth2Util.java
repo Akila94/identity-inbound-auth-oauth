@@ -52,8 +52,11 @@ import org.json.JSONObject;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
+import org.wso2.carbon.identity.application.common.model.IdentityProvider;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
+import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.base.IdentityException;
@@ -87,6 +90,8 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.OauthTokenIssuer;
 import org.wso2.carbon.identity.oauth2.token.handlers.grant.AuthorizationGrantHandler;
 import org.wso2.carbon.identity.openidconnect.model.RequestedClaim;
+import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
+import org.wso2.carbon.idp.mgt.IdentityProviderManager;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
@@ -119,11 +124,9 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -150,6 +153,7 @@ public class OAuth2Util {
     public static final String ENABLE_OPENID_CONNECT_AUDIENCES = "EnableAudiences";
     public static final String OPENID_CONNECT_AUDIENCE = "audience";
     private static final String DOT_SEPARATER = ".";
+    private static final String IDP_ENTITY_ID = "IdPEntityId";
 
     public static final String DEFAULT_TOKEN_TYPE = "Default";
 
@@ -487,7 +491,8 @@ public class OAuth2Util {
      * @return Username of the user which own client id and client secret if authentication is
      * successful. Empty string otherwise.
      * @throws IdentityOAuthAdminException Error when looking up the credentials from the database
-     * @deprecated Authenticate the OAuth consumer and return the username of user which own the provided client id and client
+     * @deprecated Authenticate the OAuth consumer and return the username of user which own the provided client id
+     * and client
      * secret.
      */
     public static String getAuthenticatedUsername(String clientId, String clientSecretProvided)
@@ -614,7 +619,7 @@ public class OAuth2Util {
 
     public static Map<String, String> getAvailableUserStoreDomainMappings() throws
             IdentityOAuth2Exception {
-        //TreeMap is used to ignore the case sensitivity of key. Because when user logged in, the case of the user name is ignored.
+        //TreeMap is used to ignore the case sensitivity of key. Because when user logged in, the case of the username is ignored.
         Map<String, String> userStoreDomainMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
         String domainsStr = getAccessTokenPartitioningDomains();
         if (domainsStr != null) {
@@ -826,8 +831,7 @@ public class OAuth2Util {
             String[] strArr = userId.split(UserCoreConstants.DOMAIN_SEPARATOR);
             if (strArr != null && strArr.length > 1) {
                 userStore = strArr[0];
-                accessTokenStoreTable = OAuth2Util.getPartitionedTableByUserStore(OAuthConstants.ACCESS_TOKEN_STORE_TABLE,
-                        userStore);
+                accessTokenStoreTable = OAuth2Util.getPartitionedTableByUserStore(OAuthConstants.ACCESS_TOKEN_STORE_TABLE, userStore);
             }
         }
         return accessTokenStoreTable;
@@ -1097,6 +1101,7 @@ public class OAuth2Util {
                     (tenantDomain)) {
                 oidcDiscoveryEPUrl = getTenantUrl(oidcDiscoveryEPUrl, tenantDomain);
             }
+
             return oidcDiscoveryEPUrl;
         }
 
@@ -1502,7 +1507,7 @@ public class OAuth2Util {
      * @throws InvalidOAuthClientException
      */
     public static OauthTokenIssuer getOAuthTokenIssuerForOAuthApp(String clientId)
-            throws  IdentityOAuth2Exception, InvalidOAuthClientException {
+            throws IdentityOAuth2Exception, InvalidOAuthClientException {
 
         OAuthAppDO appDO = null;
         try {
@@ -1772,7 +1777,8 @@ public class OAuth2Util {
             log.warn("Error in OAuth Configuration. OAuth element is not available.");
             return isAudienceEnabled;
         }
-        OMElement configOpenIDConnect = oauthElem.getFirstChildWithName(new QName(IdentityCoreConstants.IDENTITY_DEFAULT_NAMESPACE, OPENID_CONNECT));
+        OMElement configOpenIDConnect = oauthElem.getFirstChildWithName(new QName(IdentityCoreConstants
+                .IDENTITY_DEFAULT_NAMESPACE, OPENID_CONNECT));
 
         if (configOpenIDConnect == null) {
             log.warn("Error in OAuth Configuration. OpenID element is not available.");
@@ -2407,7 +2413,7 @@ public class OAuth2Util {
      * Return true if the token identifier is JWT.
      *
      * @param tokenIdentifier String JWT token identifier.
-     * @return  true for a JWT token.
+     * @return true for a JWT token.
      */
     public static boolean isJWT(String tokenIdentifier) {
         // JWT token contains 3 base64 encoded components separated by periods.
@@ -2418,7 +2424,7 @@ public class OAuth2Util {
      * Return true if the JWT id token is encrypted.
      *
      * @param idToken String JWT ID token.
-     * @return  Boolean state of encryption.
+     * @return Boolean state of encryption.
      */
     public static boolean isIDTokenEncrypted(String idToken) {
         // Encrypted ID token contains 5 base64 encoded components separated by periods.
@@ -2502,6 +2508,7 @@ public class OAuth2Util {
      * @return true if supported
      */
     public static boolean isRequestParameterSupported() {
+
         return Boolean.TRUE;
     }
 
@@ -2511,8 +2518,82 @@ public class OAuth2Util {
      * @return true if supported
      */
     public static boolean isClaimsParameterSupported() {
+
         return Boolean.TRUE;
     }
-    
+
+    /**
+     * Returns the federated IdP resolved from the given domain.
+     * For a federated user the user store domain is in the format of FEDERATED:{federated-idp-name}
+     *
+     * @param userStoreDomain user store domain to be resolved from
+     * @return federated IdP name if user store domain is of format FEDERATED:{federated-idp-name}. Else returns null.
+     */
+    public static String getFederatedIdPFromDomain(String userStoreDomain) {
+
+        if (StringUtils.startsWith(userStoreDomain, OAuthConstants.UserType.FEDERATED_USER_DOMAIN_PREFIX)) {
+
+            String[] tokens = userStoreDomain.split(OAuthConstants.UserType.FEDERATED_USER_DOMAIN_SEPARATOR);
+            if (tokens.length == 2) {
+                return tokens[1];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Creates an instance on AuthenticatedUser{@link AuthenticatedUser} for the given parameters.
+     * If given user store domain is of format FEDERATED:{federated-idp-name}, the authenticated user instance will
+     * be flagged as a federated user.
+     *
+     * @param username        username of the user
+     * @param userStoreDomain user store domain
+     * @param tenantDomain    tenent domain
+     * @return an instance of AuthenticatedUser{@link AuthenticatedUser}
+     */
+    public static AuthenticatedUser createAuthenticatedUser(String username, String userStoreDomain,
+                                                            String tenantDomain) {
+
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser();
+        authenticatedUser.setUserName(username);
+        authenticatedUser.setTenantDomain(tenantDomain);
+        if (StringUtils.startsWith(userStoreDomain, OAuthConstants.UserType.FEDERATED_USER_DOMAIN_PREFIX) &&
+                !OAuthServerConfiguration.getInstance().isMapFederatedUsersToLocal()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Federated prefix found in domain: " + userStoreDomain + " for user: " + username + " in " +
+                        "tenant domain:" + tenantDomain + ". Flag user as a federated user.");
+            }
+            authenticatedUser.setFederatedUser(true);
+            authenticatedUser.setFederatedIdPName(OAuth2Util.getFederatedIdPFromDomain(userStoreDomain));
+        } else {
+            authenticatedUser.setUserStoreDomain(userStoreDomain);
+        }
+
+        return authenticatedUser;
+    }
+
+    public static String getIdTokenIssuer(String tenantDomain) throws IdentityOAuth2Exception {
+
+        IdentityProvider identityProvider = getResidentIdp(tenantDomain);
+        FederatedAuthenticatorConfig[] fedAuthnConfigs = identityProvider.getFederatedAuthenticatorConfigs();
+        // Get OIDC authenticator
+        FederatedAuthenticatorConfig oidcAuthenticatorConfig =
+                IdentityApplicationManagementUtil.getFederatedAuthenticator(fedAuthnConfigs,
+                        IdentityApplicationConstants.Authenticator.OIDC.NAME);
+        return IdentityApplicationManagementUtil.getProperty(oidcAuthenticatorConfig.getProperties(),
+                IDP_ENTITY_ID).getValue();
+    }
+
+    private static IdentityProvider getResidentIdp(String tenantDomain) throws IdentityOAuth2Exception {
+
+        try {
+            return IdentityProviderManager.getInstance().getResidentIdP(tenantDomain);
+        } catch (IdentityProviderManagementException e) {
+            String errorMsg = String.format("Error while getting Resident Identity Provider of '%s' tenant.", tenantDomain);
+            throw new IdentityOAuth2Exception(errorMsg, e);
+        }
+    }
+
 }
 
