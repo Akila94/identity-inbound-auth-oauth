@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.oauth2.RequestObjectException;
 import org.wso2.carbon.identity.oauth2.dao.OAuthTokenPersistenceFactory;
 import org.wso2.carbon.identity.openidconnect.model.RequestedClaim;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -72,7 +73,7 @@ public class RequestObjectService {
         List<RequestedClaim> essentialClaims;
         if (log.isDebugEnabled()) {
             log.debug("Invoking the RequestObjectPersistenceFactory to retrieve essential claims list " +
-                    "by using session data key.");
+                    "by using session data key: " + sessionDataKey);
         }
 
         try {
