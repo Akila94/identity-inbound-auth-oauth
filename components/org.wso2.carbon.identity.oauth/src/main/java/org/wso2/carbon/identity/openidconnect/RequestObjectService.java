@@ -73,7 +73,7 @@ public class RequestObjectService {
         List<RequestedClaim> essentialClaims;
         if (log.isDebugEnabled()) {
             log.debug("Invoking the RequestObjectPersistenceFactory to retrieve essential claims list " +
-                    "by using session data key: " + sessionDataKey);
+                    "by using session data key: " + sessionDataKey + ", isUserInfo: " + isUserInfo);
         }
 
         try {
