@@ -80,8 +80,10 @@ import org.wso2.carbon.identity.oauth.dto.ScopeDTO;
 import org.wso2.carbon.identity.oauth.internal.OAuthComponentServiceHolder;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.authz.OAuthAuthzReqMessageContext;
+import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.config.SpOAuth2ExpiryTimeConfiguration;
 import org.wso2.carbon.identity.oauth2.dao.OAuthTokenPersistenceFactory;
+import org.wso2.carbon.identity.oauth2.dto.OAuthRevocationRequestDTO;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.model.ClientCredentialDO;
@@ -2595,5 +2597,22 @@ public class OAuth2Util {
         }
     }
 
-}
+    /**
+     * Used to build an OAuth revocation request DTO.
+     *
+     * @param oAuthClientAuthnContext  OAuth client authentication context.
+     * @param accessToken Access token to be revoked.
+     * @return Returns a OAuth revocation request DTO.
+     */
+    public static OAuthRevocationRequestDTO buildOAuthRevocationRequest(OAuthClientAuthnContext oAuthClientAuthnContext,
+                                                                        String accessToken){
 
+        OAuthRevocationRequestDTO revocationRequestDTO = new OAuthRevocationRequestDTO();
+
+        revocationRequestDTO.setToken(accessToken);
+        revocationRequestDTO.setOauthClientAuthnContext(oAuthClientAuthnContext);
+        revocationRequestDTO.setConsumerKey(oAuthClientAuthnContext.getClientId());
+
+        return revocationRequestDTO;
+    }
+}

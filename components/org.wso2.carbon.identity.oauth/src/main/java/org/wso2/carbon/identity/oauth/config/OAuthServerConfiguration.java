@@ -136,6 +136,7 @@ public class OAuthServerConfiguration {
     private String tokenCleanupFeatureEnable;
     private OauthTokenIssuer oauthIdentityTokenGenerator;
     private boolean cacheEnabled = false;
+    private boolean isTokenRenewalPerRequestEnabled = false;
     private boolean isRefreshTokenRenewalEnabled = true;
     private boolean assertionsUserNameEnabled = false;
     private boolean accessTokenPartitioningEnabled = false;
@@ -301,6 +302,10 @@ public class OAuthServerConfiguration {
 
         // read OAuth URLs
         parseOAuthURLs(oauthElem);
+
+        // read token renewal per request config.
+        // if enabled access token and refresh token will be renewed for each token endpoint call.
+        parseTokenRenewalPerRequestConfiguration(oauthElem);
 
         // read refresh token renewal config
         parseRefreshTokenRenewalConfiguration(oauthElem);
@@ -601,6 +606,16 @@ public class OAuthServerConfiguration {
 
     public Map<String, OauthTokenIssuer> getOauthTokenIssuerMap() {
         return oauthTokenIssuerMap;
+    }
+
+    /**
+     * Check if token renewal is enabled for each call to the token endpoint.
+     *
+     * @return Returns true if the config is enabled.
+     */
+    public boolean isTokenRenewalPerRequestEnabled() {
+
+        return isTokenRenewalPerRequestEnabled;
     }
 
     public Map<String, AuthorizationGrantHandler> getSupportedGrantTypes() {
@@ -2564,6 +2579,18 @@ public class OAuthServerConfiguration {
         }
     }
 
+    private void parseTokenRenewalPerRequestConfiguration(OMElement oauthConfigElem) {
+
+        OMElement enableTokenRenewalElem = oauthConfigElem.getFirstChildWithName(getQNameWithIdentityNS(
+                ConfigElements.RENEW_TOKEN_PER_REQUEST));
+        if (enableTokenRenewalElem != null) {
+            isTokenRenewalPerRequestEnabled = Boolean.parseBoolean(enableTokenRenewalElem.getText());
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("RenewTokenPerRequest was set to : " + isTokenRenewalPerRequestEnabled);
+        }
+    }
+
     /**
      * Localpart names for the OAuth configuration in identity.xml.
      */
@@ -2741,6 +2768,8 @@ public class OAuthServerConfiguration {
         private static final String HASH_ALGORITHM = "HashAlgorithm";
         private static final String ENABLE_CLIENT_SECRET_HASH = "EnableClientSecretHash";
 
+        // Enable/Disable token renewal on each request to the token endpoint
+        private static final String RENEW_TOKEN_PER_REQUEST = "RenewTokenPerRequest";
     }
 
 }
