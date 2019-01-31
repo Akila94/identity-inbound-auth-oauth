@@ -18,7 +18,12 @@
 
 package org.wso2.carbon.identity.oauth2.dao;
 
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
+import org.wso2.carbon.identity.oauth.tokenprocessor.HashingPersistenceProcessor;
+import org.wso2.carbon.identity.oauth.tokenprocessor.PlainTextPersistenceProcessor;
+import org.wso2.carbon.identity.oauth.tokenprocessor.TokenPersistenceProcessor;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.model.OldAccessTokenDO;
 
 import java.sql.Connection;
@@ -30,6 +35,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 /**
  * This is DAO class for cleaning old Tokens. When new tokens is generated ,refreshed or revoked old access token
@@ -39,8 +45,11 @@ import org.apache.commons.logging.LogFactory;
 public class OldTokensCleanDAO {
 
     private static Log log = LogFactory.getLog(OldTokensCleanDAO.class);
+    private TokenPersistenceProcessor hashingPersistenceProcessor = new HashingPersistenceProcessor();
+
 
     public void cleanupTokenByTokenId(String tokenId, Connection connection) throws SQLException {
+
         if (OAuthServerConfiguration.getInstance().useRetainOldAccessTokens()) {
             PreparedStatement prepStmt = connection.prepareStatement(SQLQueries.RETRIEVE_AND_STORE_IN_AUDIT);
             prepStmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
@@ -51,6 +60,7 @@ public class OldTokensCleanDAO {
     }
 
     public void cleanupTokenByTokenValue(String token, Connection connection) throws SQLException {
+
         OldAccessTokenDO oldAccessTokenObject = new OldAccessTokenDO();
         PreparedStatement prepStmt = connection.prepareStatement(SQLQueries.RETRIEVE_OLD_TOKEN_BY_TOKEN_HASH);
         prepStmt.setString(1, token);
@@ -83,8 +93,36 @@ public class OldTokensCleanDAO {
         removeTokenFromMainTable(oldAccessTokenObject.getTokenId(), connection);
     }
 
+    public String replaceOldTokenByTokenId(String oldAccessToken) throws IdentityOAuth2Exception {
+
+        Connection connection = IdentityDatabaseUtil.getDBConnection();
+
+        PreparedStatement prepStmt = null;
+        ResultSet resultSet = null;
+        try {
+            prepStmt = connection.prepareStatement(SQLQueries.RETRIEVE_OLD_TOKEN_ID_BY_TOKEN_HASH);
+            prepStmt.setString(1, hashingPersistenceProcessor.getProcessedAccessTokenIdentifier(oldAccessToken));
+            resultSet = prepStmt.executeQuery();
+
+            if (resultSet.next()) {
+                return resultSet.getString("TOKEN_ID");
+            }
+            connection.commit();
+            return null;
+
+        } catch (SQLException e) {
+            String errorMsg = "Error occurred while retrieving 'Token ID' for " +
+                    "token : " + oldAccessToken;
+            throw new IdentityOAuth2Exception(errorMsg, e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, resultSet, prepStmt);
+        }
+    }
+
     private void saveTokenInAuditTable(OldAccessTokenDO oldAccessTokenDAO, Connection connection) throws SQLException {
+
         PreparedStatement insertintoaudittable = connection.prepareStatement(SQLQueries.STORE_OLD_TOKEN_IN_AUDIT);
+
         insertintoaudittable.setString(1, oldAccessTokenDAO.getTokenId());
         insertintoaudittable.setString(2, oldAccessTokenDAO.getAccessToken());
         insertintoaudittable.setString(3, oldAccessTokenDAO.getRefreshToken());
@@ -113,6 +151,7 @@ public class OldTokensCleanDAO {
 
     private void removeTokenFromMainTable(String oldAccessTokenID, Connection connection)
             throws SQLException {
+
         PreparedStatement deletefromaccesstokentable = connection.prepareStatement(SQLQueries.DELETE_OLD_TOKEN_BY_ID);
         deletefromaccesstokentable.setString(1, oldAccessTokenID);
         deletefromaccesstokentable.executeUpdate();
@@ -122,9 +161,10 @@ public class OldTokensCleanDAO {
     }
 
     public void cleanupTokensInBatch(List<String> oldTokens, Connection connection) throws SQLException {
+
         for (String token : oldTokens) {
             cleanupTokenByTokenValue(token, connection);
         }
     }
-}
 
+}

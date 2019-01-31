@@ -67,6 +67,7 @@ public class RefreshGrantHandler extends AbstractAuthorizationGrantHandler {
     public static final String DEACTIVATED_ACCESS_TOKEN = "DeactivatedAccessToken";
     private static Log log = LogFactory.getLog(RefreshGrantHandler.class);
     private boolean isHashDisabled = OAuth2Util.isHashDisabled();
+    private static boolean enableRetailOldAccessToken = OAuthServerConfiguration.getInstance().useRetainOldAccessTokens();
 
     @Override
     public boolean validateGrant(OAuthTokenReqMessageContext tokReqMsgCtx)
@@ -567,7 +568,11 @@ public class RefreshGrantHandler extends AbstractAuthorizationGrantHandler {
 
             grantCacheEntry.setValidityPeriod(
                     TimeUnit.MILLISECONDS.toNanos(accessTokenBean.getValidityPeriodInMillis()));
-            AuthorizationGrantCache.getInstance().clearCacheEntryByToken(oldAuthorizationGrantCacheKey);
+            if (enableRetailOldAccessToken) {
+                AuthorizationGrantCache.getInstance().clearCacheEntryByOldToken(oldAuthorizationGrantCacheKey);
+            } else {
+                AuthorizationGrantCache.getInstance().clearCacheEntryByToken(oldAuthorizationGrantCacheKey);
+            }
             AuthorizationGrantCache.getInstance().addToCacheByToken(authorizationGrantCacheKey, grantCacheEntry);
         }
     }
