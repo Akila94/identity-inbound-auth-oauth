@@ -25,7 +25,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
@@ -67,7 +66,7 @@ public class RefreshGrantHandler extends AbstractAuthorizationGrantHandler {
     public static final String DEACTIVATED_ACCESS_TOKEN = "DeactivatedAccessToken";
     private static Log log = LogFactory.getLog(RefreshGrantHandler.class);
     private boolean isHashDisabled = OAuth2Util.isHashDisabled();
-    private static boolean enableRetailOldAccessToken = OAuthServerConfiguration.getInstance().useRetainOldAccessTokens();
+    private static boolean enableRetainOldAccessToken = OAuthServerConfiguration.getInstance().useRetainOldAccessTokens();
 
     @Override
     public boolean validateGrant(OAuthTokenReqMessageContext tokReqMsgCtx)
@@ -568,7 +567,7 @@ public class RefreshGrantHandler extends AbstractAuthorizationGrantHandler {
 
             grantCacheEntry.setValidityPeriod(
                     TimeUnit.MILLISECONDS.toNanos(accessTokenBean.getValidityPeriodInMillis()));
-            if (enableRetailOldAccessToken) {
+            if (enableRetainOldAccessToken) {
                 AuthorizationGrantCache.getInstance().clearCacheEntryByOldToken(oldAuthorizationGrantCacheKey);
             } else {
                 AuthorizationGrantCache.getInstance().clearCacheEntryByToken(oldAuthorizationGrantCacheKey);

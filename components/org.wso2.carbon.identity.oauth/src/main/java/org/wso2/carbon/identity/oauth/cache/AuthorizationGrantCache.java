@@ -40,7 +40,7 @@ public class AuthorizationGrantCache extends BaseCache<AuthorizationGrantCacheKe
 
     private static volatile AuthorizationGrantCache instance;
     private static final Log log = LogFactory.getLog(AuthorizationGrantCache.class);
-    OldTokensCleanDAO oldTokenCleanupObject = new OldTokensCleanDAO();
+    private static final OldTokensCleanDAO oldTokenCleanupObject = new OldTokensCleanDAO();
 
     /**
      * Private constructor which will not allow to create objects of this class from outside
@@ -193,7 +193,7 @@ public class AuthorizationGrantCache extends BaseCache<AuthorizationGrantCacheKe
         try {
             return oldTokenCleanupObject.replaceOldTokenByTokenId(keyValue);
         } catch (IdentityOAuth2Exception e) {
-            log.error("Failed to retrieve token id by token from store for - ." + keyValue, e);
+            log.error("Failed to retrieve token id by token : " + keyValue + ", from the audit store.", e);
         }
         return keyValue;
     }

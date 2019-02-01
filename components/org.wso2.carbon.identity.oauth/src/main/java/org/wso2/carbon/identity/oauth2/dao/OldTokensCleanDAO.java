@@ -36,6 +36,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
+import org.wso2.carbon.user.core.UserStoreException;
 
 /**
  * This is DAO class for cleaning old Tokens. When new tokens is generated ,refreshed or revoked old access token
@@ -95,11 +96,12 @@ public class OldTokensCleanDAO {
 
     public String replaceOldTokenByTokenId(String oldAccessToken) throws IdentityOAuth2Exception {
 
-        Connection connection = IdentityDatabaseUtil.getDBConnection();
-
+        Connection connection = null;
         PreparedStatement prepStmt = null;
         ResultSet resultSet = null;
         try {
+            connection = IdentityDatabaseUtil.getDBConnection();
+            connection.setAutoCommit(false);
             prepStmt = connection.prepareStatement(SQLQueries.RETRIEVE_OLD_TOKEN_ID_BY_TOKEN_HASH);
             prepStmt.setString(1, hashingPersistenceProcessor.getProcessedAccessTokenIdentifier(oldAccessToken));
             resultSet = prepStmt.executeQuery();
@@ -109,11 +111,16 @@ public class OldTokensCleanDAO {
             }
             connection.commit();
             return null;
-
         } catch (SQLException e) {
-            String errorMsg = "Error occurred while retrieving 'Token ID' for " +
-                    "token : " + oldAccessToken;
-            throw new IdentityOAuth2Exception(errorMsg, e);
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException e1) {
+                    log.error("Error in connection rollback.", e1);
+                }
+            }
+            throw new IdentityOAuth2Exception(String.format("Error occurred while retrieving 'Token ID' for token : ",
+                    oldAccessToken), e);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, resultSet, prepStmt);
         }
@@ -122,7 +129,6 @@ public class OldTokensCleanDAO {
     private void saveTokenInAuditTable(OldAccessTokenDO oldAccessTokenDAO, Connection connection) throws SQLException {
 
         PreparedStatement insertintoaudittable = connection.prepareStatement(SQLQueries.STORE_OLD_TOKEN_IN_AUDIT);
-
         insertintoaudittable.setString(1, oldAccessTokenDAO.getTokenId());
         insertintoaudittable.setString(2, oldAccessTokenDAO.getAccessToken());
         insertintoaudittable.setString(3, oldAccessTokenDAO.getRefreshToken());
