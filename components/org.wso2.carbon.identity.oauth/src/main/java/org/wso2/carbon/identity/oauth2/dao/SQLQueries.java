@@ -567,9 +567,6 @@ public class SQLQueries {
                     "LEFT JOIN IDN_OAUTH2_SCOPE_BINDING SCOPEBINDINGS ON SCOPES.SCOPE_ID=SCOPEBINDINGS.SCOPE_ID " +
                     "WHERE SCOPES.NAME = ? AND TENANT_ID = ?";
 
-    public static final String RETRIEVE_OLD_TOKEN_ID_BY_TOKEN_HASH = "SELECT TOKEN_ID FROM " +
-            "IDN_OAUTH2_ACCESS_TOKEN_AUDIT WHERE ACCESS_TOKEN_HASH = ?";
-
     private SQLQueries() {
 
     }

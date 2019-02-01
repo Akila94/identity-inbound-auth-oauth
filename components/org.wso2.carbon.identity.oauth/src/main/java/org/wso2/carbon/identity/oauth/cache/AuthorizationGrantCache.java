@@ -26,7 +26,6 @@ import org.wso2.carbon.identity.application.common.cache.BaseCache;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.dao.OAuthTokenPersistenceFactory;
-import org.wso2.carbon.identity.oauth2.dao.OldTokensCleanDAO;
 import org.wso2.carbon.utils.CarbonUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -40,7 +39,6 @@ public class AuthorizationGrantCache extends BaseCache<AuthorizationGrantCacheKe
 
     private static volatile AuthorizationGrantCache instance;
     private static final Log log = LogFactory.getLog(AuthorizationGrantCache.class);
-    private static final OldTokensCleanDAO oldTokenCleanupObject = new OldTokensCleanDAO();
 
     /**
      * Private constructor which will not allow to create objects of this class from outside
@@ -107,13 +105,13 @@ public class AuthorizationGrantCache extends BaseCache<AuthorizationGrantCacheKe
     }
 
     /**
-     * Clears a cache entry by old access token in Audit log table
+     * Clears a cache entry by tokenId
      *
      * @param key Key to clear cache.
      */
-    public void clearCacheEntryByOldToken(AuthorizationGrantCacheKey key) {
+    public void clearCacheEntryByTokenId(AuthorizationGrantCacheKey key, String tokenId) {
         super.clearCacheEntry(key);
-        clearFromSessionStore(replaceFromOldTokenId(key.getUserAttributesId()));
+        clearFromSessionStore(tokenId);
     }
 
     /**
@@ -180,20 +178,6 @@ public class AuthorizationGrantCache extends BaseCache<AuthorizationGrantCacheKe
             return OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO().getTokenIdByAccessToken(keyValue);
         } catch (IdentityOAuth2Exception e) {
             log.error("Failed to retrieve token id by token from store for - ." + keyValue, e);
-        }
-        return keyValue;
-    }
-
-    /**
-     * Retrieve the access token id using the access token
-     * @param keyValue Access token
-     * @return TOKEN_ID from the database
-     */
-    private String replaceFromOldTokenId(String keyValue) {
-        try {
-            return oldTokenCleanupObject.replaceOldTokenByTokenId(keyValue);
-        } catch (IdentityOAuth2Exception e) {
-            log.error("Failed to retrieve token id by token : " + keyValue + ", from the audit store.", e);
         }
         return keyValue;
     }
