@@ -69,6 +69,7 @@
     List<String> tokenTypes = new ArrayList<String>();
     String[] supportedIdTokenEncryptionAlgorithms = null;
     String[] supportedIdTokenEncryptionMethods = null;
+    boolean isRenewRefreshTokenEnabled = true;
 
     try {
 
@@ -134,6 +135,11 @@
             // Sorting the list to display the scope validators in alphabetical order
             Collections.sort(allowedScopeValidators);
             tokenTypes = new ArrayList<String>(Arrays.asList(client.getSupportedTokenTypes()));
+            if (app.getRenewRefreshTokenEnabled() == null) {
+                isRenewRefreshTokenEnabled = client.isRefreshTokenRenewalEnabled();
+            } else {
+                isRenewRefreshTokenEnabled = Boolean.parseBoolean(app.getRenewRefreshTokenEnabled());
+            }
             if (OAuthConstants.OAuthVersions.VERSION_2.equals(app.getOAuthVersion())) {
                 id = resourceBundle.getString("consumerkey.oauth20");
                 secret = resourceBundle.getString("consumersecret.oauth20");
@@ -247,6 +253,9 @@
                         CARBON.showWarningDialog('<fmt:message key="application.is.required"/>');
                         return false;
                     }
+                    if (!$(jQuery("#grant_refresh_token"))[0].checked){
+                        document.getElementById("renewRefreshTokenPerApp").checked = <%=Encode.forJavaScriptAttribute(String.valueOf(client.isRefreshTokenRenewalEnabled()))%>;
+                    }
                     var versionValue = document.getElementsByName("oauthVersion")[0].value;
                     if (versionValue == '<%=OAuthConstants.OAuthVersions.VERSION_2%>') {
                         if (!$(jQuery("#grant_authorization_code"))[0].checked && !$(jQuery("#grant_implicit"))[0].checked) {
@@ -308,6 +317,7 @@
                     var supportGrantCode = $('input[name=grant_authorization_code]:checked').val() != null;
                     var supportImplicit = $('input[name=grant_implicit]:checked').val() != null;
                     var idTokenEncryptionEnabled = $('input[name=encryptIdToken]:checked').val() != null;
+                    var grantRefreshToken = $('input[name=grant_refresh_token]:checked').val() != null;
 
                     if(!supportGrantCode && !supportImplicit){
                         $(jQuery('#callback_row')).hide();
@@ -320,6 +330,11 @@
                     } else {
                         $(jQuery("#pkce_enable").hide());
                         $(jQuery("#pkce_support_plain").hide());
+                    }
+                    if (grantRefreshToken){
+                        $(jQuery("#renew_refresh_token_per_app").show());
+                    } else {
+                        $(jQuery("#renew_refresh_token_per_app").hide());
                     }
                     /**
                      * Backchannel logout feature is kept hidden in the UI for now.
@@ -566,6 +581,16 @@
                                         <div class="sectionHelp">
                                             <fmt:message key='bypassclientcreds.support.plain.hint'/>
                                         </div>
+                                    </td>
+                                </tr>
+                                <tr id="renew_refresh_token_per_app">
+                                    <td colspan="2">
+                                        <label title="Enable/Disable renew refresh token for this App">
+                                            <input type="checkbox" name="renewRefreshTokenPerApp"
+                                                   id="renewRefreshTokenPerApp" value="true"
+                                                    <%=(isRenewRefreshTokenEnabled ? "checked" : "")%> />
+                                            <fmt:message key='renew.refresh.token.per.app'/>
+                                        </label>
                                     </td>
                                 </tr>
                                 <tr>

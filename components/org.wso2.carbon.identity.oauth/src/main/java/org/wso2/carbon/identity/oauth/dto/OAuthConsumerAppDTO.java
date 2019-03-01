@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.oauth.dto;
 
+import org.apache.axis2.databinding.annotation.IgnoreNullElement;
+
 public class OAuthConsumerAppDTO {
 
     private String oauthConsumerKey;
@@ -36,6 +38,8 @@ public class OAuthConsumerAppDTO {
     private long refreshTokenExpiryTime;
     private String[] audiences;
     private boolean bypassClientCredentials;
+    @IgnoreNullElement
+    private String renewRefreshTokenEnabled;
     // OIDC related properties
     private boolean isRequestObjectSignatureValidationEnabled;
     private boolean isIdTokenEncryptionEnabled;
@@ -238,5 +242,12 @@ public class OAuthConsumerAppDTO {
     public void setBypassClientCredentials(boolean isPublicClient) {
         this.bypassClientCredentials = isPublicClient;
     }
+
+    public void setRenewRefreshTokenEnabled(String renewRefreshTokenEnabled){
+
+        this.renewRefreshTokenEnabled = renewRefreshTokenEnabled;
+    }
+
+    public String getRenewRefreshTokenEnabled() { return renewRefreshTokenEnabled; }
 }
 
