@@ -489,6 +489,19 @@
                                     <td><input class="text-box-big" id="callback" name="callback" type="text"
                                                white-list-patterns="https-url"/></td>
                                 </tr>
+                                <tr id="renew_refresh_token_per_app">
+                                    <td colspan="2">
+                                        <label>
+                                            <input type="checkbox" name="renewRefreshTokenPerApp"
+                                                   id="renewRefreshTokenPerApp" value="true"
+                                                    <%=(client.isRefreshTokenRenewalEnabled() ? "checked" : "")%> />
+                                            <fmt:message key='renew.refresh.token.per.app'/>
+                                        </label>
+                                        <div class="sectionHelp">
+                                            <fmt:message key='renew.refresh.token.per.app.hint'/>
+                                        </div>
+                                    </td>
+                                </tr>
                                 <%if(client.isPKCESupportedEnabled()) {%>
                                 <tr id="pkce_enable">
                                     <td class="leftCol-med" colspan="2">
@@ -522,16 +535,6 @@
                                         <div class="sectionHelp">
                                             <fmt:message key='bypassclientcreds.support.plain.hint'/>
                                         </div>
-                                    </td>
-                                </tr>
-                                <tr id="renew_refresh_token_per_app">
-                                    <td colspan="2">
-                                        <label title="Enable/Disable renew refresh token for this app">
-                                            <input type="checkbox" name="renewRefreshTokenPerApp"
-                                                   id="renewRefreshTokenPerApp" value="true"
-                                                    <%=(client.isRefreshTokenRenewalEnabled() ? "checked" : "")%> />
-                                            <fmt:message key='renew.refresh.token.per.app'/>
-                                        </label>
                                     </td>
                                 </tr>
                                 <tr id="userAccessTokenPlain">

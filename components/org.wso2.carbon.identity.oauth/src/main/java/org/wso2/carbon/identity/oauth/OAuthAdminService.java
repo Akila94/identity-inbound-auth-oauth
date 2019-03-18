@@ -1025,7 +1025,7 @@ public class OAuthAdminService extends AbstractAdmin {
      *
      * @return renew refresh token property value
      */
-    public boolean isRefreshTokenRenewalEnabled(){
+    public boolean isRefreshTokenRenewalEnabled() {
 
         return OAuthServerConfiguration.getInstance().isRefreshTokenRenewalEnabled();
     }
