@@ -253,7 +253,7 @@
                         CARBON.showWarningDialog('<fmt:message key="application.is.required"/>');
                         return false;
                     }
-                    if (!$(jQuery("#grant_refresh_token"))[0].checked){
+                    if (!$(jQuery("#grant_refresh_token"))[0].checked) {
                         document.getElementById("renewRefreshTokenPerApp").checked = <%=Encode.forJavaScriptAttribute(String.valueOf(client.isRefreshTokenRenewalEnabled()))%>;
                     }
                     var versionValue = document.getElementsByName("oauthVersion")[0].value;
@@ -331,7 +331,7 @@
                         $(jQuery("#pkce_enable").hide());
                         $(jQuery("#pkce_support_plain").hide());
                     }
-                    if (grantRefreshToken){
+                    if (grantRefreshToken) {
                         $(jQuery("#renew_refresh_token_per_app").show());
                     } else {
                         $(jQuery("#renew_refresh_token_per_app").hide());

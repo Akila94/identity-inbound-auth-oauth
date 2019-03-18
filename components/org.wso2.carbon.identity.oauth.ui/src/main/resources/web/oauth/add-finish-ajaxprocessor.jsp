@@ -157,7 +157,7 @@
                 app.setIdTokenEncryptionAlgorithm(idTokenEncryptionAlgorithm);
                 app.setIdTokenEncryptionMethod(idTokenEncryptionMethod);
             }
-            if (isRenewRefreshTokenEnabled != client.isRefreshTokenRenewalEnabled()){
+            if (isRenewRefreshTokenEnabled != client.isRefreshTokenRenewalEnabled()) {
                 app.setRenewRefreshTokenEnabled(String.valueOf(isRenewRefreshTokenEnabled));
             }
 

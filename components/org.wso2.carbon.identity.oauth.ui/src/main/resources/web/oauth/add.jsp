@@ -178,7 +178,7 @@
                         CARBON.showWarningDialog('<fmt:message key="application.is.required"/>');
                         return false;
                     }
-                    if (!$(jQuery("#grant_refresh_token"))[0].checked){
+                    if (!$(jQuery("#grant_refresh_token"))[0].checked) {
                         document.getElementById("renewRefreshTokenPerApp").checked = <%=Encode.forJavaScriptAttribute(String.valueOf(client.isRefreshTokenRenewalEnabled()))%>;
                     }
                     var version2Checked = document.getElementById("oauthVersion20").checked;
@@ -294,7 +294,7 @@
                             $('select[name=idTokenEncryptionAlgorithm]').prop('disabled', false);
                             $('select[name=idTokenEncryptionMethod]').prop('disabled', false);
                         }
-                        if (grantRefreshToken){
+                        if (grantRefreshToken) {
                             $(jQuery("#renew_refresh_token_per_app").show());
                         } else {
                             $(jQuery("#renew_refresh_token_per_app").hide());

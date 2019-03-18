@@ -156,7 +156,7 @@
                 app.setIdTokenEncryptionMethod(idTokenEncryptionMethod);
             }
             app.setBypassClientCredentials(bypassClientCredentials);
-            if (isRenewRefreshTokenEnabled != client.isRefreshTokenRenewalEnabled()){
+            if (isRenewRefreshTokenEnabled != client.isRefreshTokenRenewalEnabled()) {
                 app.setRenewRefreshTokenEnabled(String.valueOf(isRenewRefreshTokenEnabled));
             }
             
