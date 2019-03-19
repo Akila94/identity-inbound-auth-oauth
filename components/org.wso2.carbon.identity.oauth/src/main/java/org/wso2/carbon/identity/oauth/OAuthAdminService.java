@@ -280,6 +280,7 @@ public class OAuthAdminService extends AbstractAdmin {
                     app.setBackChannelLogoutUrl(application.getBackChannelLogoutUrl());
                     app.setTokenType(application.getTokenType());
                     app.setBypassClientCredentials(application.isBypassClientCredentials());
+                    app.setRenewRefreshTokenEnabled(application.getRenewRefreshTokenEnabled());
                 }
                 dao.addOAuthApplication(app);
                 AppInfoCache.getInstance().addToCache(app.getOauthConsumerKey(), app);
@@ -392,6 +393,7 @@ public class OAuthAdminService extends AbstractAdmin {
             oauthappdo.setIdTokenEncryptionAlgorithm(consumerAppDTO.getIdTokenEncryptionAlgorithm());
             oauthappdo.setIdTokenEncryptionMethod(consumerAppDTO.getIdTokenEncryptionMethod());
             oauthappdo.setBackChannelLogoutUrl(consumerAppDTO.getBackChannelLogoutUrl());
+            oauthappdo.setRenewRefreshTokenEnabled(consumerAppDTO.getRenewRefreshTokenEnabled());
         }
         dao.updateConsumerApplication(oauthappdo);
         AppInfoCache.getInstance().addToCache(oauthappdo.getOauthConsumerKey(), oauthappdo);
@@ -1019,6 +1021,16 @@ public class OAuthAdminService extends AbstractAdmin {
     }
 
     /**
+     * Get the renew refresh token property value from identity.xml file.
+     *
+     * @return renew refresh token property value
+     */
+    public boolean isRefreshTokenRenewalEnabled() {
+
+        return OAuthServerConfiguration.getInstance().isRefreshTokenRenewalEnabled();
+    }
+
+    /**
      * @return true if PKCE is supported by the database, false if not
      */
     public boolean isPKCESupportEnabled() {
@@ -1166,6 +1178,7 @@ public class OAuthAdminService extends AbstractAdmin {
         dto.setBackChannelLogoutUrl(appDO.getBackChannelLogoutUrl());
         dto.setTokenType(appDO.getTokenType());
         dto.setBypassClientCredentials(appDO.isBypassClientCredentials());
+        dto.setRenewRefreshTokenEnabled(appDO.getRenewRefreshTokenEnabled());
         return dto;
     }
 

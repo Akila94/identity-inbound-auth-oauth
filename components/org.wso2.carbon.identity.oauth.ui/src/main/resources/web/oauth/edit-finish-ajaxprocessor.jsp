@@ -65,6 +65,7 @@
     boolean pkceMandatory = false;
     boolean pkceSupportPlain = false;
     boolean bypassClientCredentials = false;
+    boolean isRenewRefreshTokenEnabled = Boolean.parseBoolean(request.getParameter("renewRefreshTokenPerApp"));
 
     if (request.getParameter("pkce") != null) {
         pkceMandatory = true;
@@ -155,6 +156,9 @@
                 app.setIdTokenEncryptionMethod(idTokenEncryptionMethod);
             }
             app.setBypassClientCredentials(bypassClientCredentials);
+            if (isRenewRefreshTokenEnabled != client.isRefreshTokenRenewalEnabled()) {
+                app.setRenewRefreshTokenEnabled(String.valueOf(isRenewRefreshTokenEnabled));
+            }
             
             client.updateOAuthApplicationData(app);
             String message = resourceBundle.getString("app.updated.successfully");

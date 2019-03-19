@@ -58,6 +58,7 @@
     String idTokenExpiryTime = request.getParameter("idTokenExpiryTime");
     String backchannelLogoutUrl = request.getParameter("backChannelLogout");
     String tokenType = request.getParameter("tokenType");
+    boolean isRenewRefreshTokenEnabled = Boolean.parseBoolean(request.getParameter("renewRefreshTokenPerApp"));
 
 	boolean pkceMandatory = false;
 	boolean pkceSupportPlain = false;
@@ -155,6 +156,9 @@
             if (isIdTokenEncrypted) {
                 app.setIdTokenEncryptionAlgorithm(idTokenEncryptionAlgorithm);
                 app.setIdTokenEncryptionMethod(idTokenEncryptionMethod);
+            }
+            if (isRenewRefreshTokenEnabled != client.isRefreshTokenRenewalEnabled()) {
+                app.setRenewRefreshTokenEnabled(String.valueOf(isRenewRefreshTokenEnabled));
             }
 
             if (isHashDisabled) {

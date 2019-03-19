@@ -178,6 +178,9 @@
                         CARBON.showWarningDialog('<fmt:message key="application.is.required"/>');
                         return false;
                     }
+                    if (!$(jQuery("#grant_refresh_token"))[0].checked) {
+                        document.getElementById("renewRefreshTokenPerApp").checked = <%=Encode.forJavaScriptAttribute(String.valueOf(client.isRefreshTokenRenewalEnabled()))%>;
+                    }
                     var version2Checked = document.getElementById("oauthVersion20").checked;
                     if (version2Checked) {
                         if (!$(jQuery("#grant_authorization_code"))[0].checked && !$(jQuery("#grant_implicit"))[0].checked) {
@@ -227,6 +230,7 @@
                     var supportGrantCode = $('input[name=grant_authorization_code]:checked').val() != null;
                     var supportImplicit = $('input[name=grant_implicit]:checked').val() != null;
                     var idTokenEncryptionEnabled = $('input[name=encryptIdToken]:checked').val() != null;
+                    var grantRefreshToken = $('input[name=grant_refresh_token]:checked').val() != null;
 
                     if(oauthVersion == "<%=OAuthConstants.OAuthVersions.VERSION_1A%>") {
                         $(jQuery('#grant_row')).hide();
@@ -246,6 +250,7 @@
                         $(jQuery('#encryption_algorithm_row')).hide();
                         $(jQuery('#callback_row')).show();
                         $(jQuery('#bypass_client_credentials').hide());
+                        $(jQuery('#renew_refresh_token_per_app').hide());
 
                     } else if(oauthVersion == "<%=OAuthConstants.OAuthVersions.VERSION_2%>") {
                         $(jQuery('#grant_row')).show();
@@ -267,6 +272,7 @@
                         $(jQuery('#encryption_algorithm_row')).show();
                         $(jQuery('#encryption_method_row')).show();
                         $(jQuery('#bypass_client_credentials').show());
+                        $(jQuery('#renew_refresh_token_per_app').show());
 
                         if (!supportGrantCode && !supportImplicit) {
                             $(jQuery('#callback_row')).hide();
@@ -287,6 +293,11 @@
                         } else {
                             $('select[name=idTokenEncryptionAlgorithm]').prop('disabled', false);
                             $('select[name=idTokenEncryptionMethod]').prop('disabled', false);
+                        }
+                        if (grantRefreshToken) {
+                            $(jQuery("#renew_refresh_token_per_app").show());
+                        } else {
+                            $(jQuery("#renew_refresh_token_per_app").hide());
                         }
                     }
                 }
@@ -477,6 +488,19 @@
                                     <td class="leftCol-med"><fmt:message key='callback'/><span class="required">*</span></td>
                                     <td><input class="text-box-big" id="callback" name="callback" type="text"
                                                white-list-patterns="https-url"/></td>
+                                </tr>
+                                <tr id="renew_refresh_token_per_app">
+                                    <td colspan="2">
+                                        <label>
+                                            <input type="checkbox" name="renewRefreshTokenPerApp"
+                                                   id="renewRefreshTokenPerApp" value="true"
+                                                    <%=(client.isRefreshTokenRenewalEnabled() ? "checked" : "")%> />
+                                            <fmt:message key='renew.refresh.token.per.app'/>
+                                        </label>
+                                        <div class="sectionHelp">
+                                            <fmt:message key='renew.refresh.token.per.app.hint'/>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <%if(client.isPKCESupportedEnabled()) {%>
                                 <tr id="pkce_enable">

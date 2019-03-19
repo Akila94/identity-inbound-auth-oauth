@@ -306,6 +306,7 @@
 
                             org.apache.axis2.context; version="${axis2.osgi.version.range}",
                             org.apache.axis2.util; version="${axis2.osgi.version.range}",
+                            org.apache.axis2.databinding.annotation; version="${axis2.osgi.version.range}",
 
                             org.apache.catalina.*; version="${tomcat.wso2.imp.pkg.version.range}",
                             org.apache.tomcat.*; version="${tomcat.wso2.imp.pkg.version.range}",
