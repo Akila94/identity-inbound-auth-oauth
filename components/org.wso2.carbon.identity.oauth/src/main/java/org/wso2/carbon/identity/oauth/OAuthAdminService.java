@@ -1212,8 +1212,7 @@ public class OAuthAdminService extends AbstractAdmin {
 
     private OAuth2Service getOAuth2Service() {
 
-        return (OAuth2Service) PrivilegedCarbonContext.getThreadLocalCarbonContext()
-                .getOSGiService(OAuth2Service.class, null);
+        return OAuthComponentServiceHolder.getInstance().getOauth2Service();
     }
 
 }
