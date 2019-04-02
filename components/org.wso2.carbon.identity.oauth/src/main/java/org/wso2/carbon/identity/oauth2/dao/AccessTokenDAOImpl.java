@@ -101,7 +101,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
         insertAccessToken(accessToken, consumerKey, accessTokenDO, connection, userStoreDomain, 0);
     }
 
-    private void insertAccessToken(String accessToken, String consumerKey, AccessTokenDO accessTokenDO,
+    private void insertAccessToken(String tokenReturnedToClient, String consumerKey, AccessTokenDO accessTokenDO,
                                    Connection connection, String userStoreDomain, int retryAttemptCounter)
             throws IdentityOAuth2Exception {
 
@@ -119,16 +119,23 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                     "Authorized user should be available for further execution.");
         }
 
+        String tokenIdentifierToPersistInDB = tokenReturnedToClient;
         try {
             OauthTokenIssuer oauthTokenIssuer = OAuth2Util.getOAuthTokenIssuerForOAuthApp(consumerKey);
             //check for persist alias for the token type
             if (oauthTokenIssuer.usePersistedAccessTokenAlias()) {
-                accessToken = oauthTokenIssuer.getAccessTokenHash(accessToken);
+                if (log.isDebugEnabled()) {
+                    String scope = OAuth2Util.buildScopeString(accessTokenDO.getScope());
+                    log.debug("OAuthTokenIssuer: " + oauthTokenIssuer.getClass().getName() + " persists an alias " +
+                            "of the returned access token for client_id:" + consumerKey + ", scope=" + scope +
+                            ", user=" + accessTokenDO.getAuthzUser().toFullQualifiedUsername());
+                }
+                tokenIdentifierToPersistInDB = oauthTokenIssuer.getAccessTokenHash(tokenReturnedToClient);
             }
         } catch (OAuthSystemException e) {
             if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
                 log.debug("Error while getting access token hash for token(hashed): " + DigestUtils
-                        .sha256Hex(accessToken));
+                        .sha256Hex(tokenReturnedToClient));
             }
             throw new IdentityOAuth2Exception("Error while getting access token hash.");
         } catch (InvalidOAuthClientException e) {
@@ -138,8 +145,8 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
 
         if (log.isDebugEnabled()) {
             if (IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
-                log.debug("Persisting access token(hashed): " + DigestUtils.sha256Hex(accessToken) + " for client: " +
-                        consumerKey + " user: " + accessTokenDO.getAuthzUser().toString() + " scope: "
+                log.debug("Persisting access token(hashed): " + DigestUtils.sha256Hex(tokenReturnedToClient) +
+                        " for client: " + consumerKey + " user: " + accessTokenDO.getAuthzUser().toString() + " scope: "
                         + Arrays.toString(accessTokenDO.getScope()));
             } else {
                 log.debug("Persisting access token for client: " + consumerKey + " user: " +
@@ -177,10 +184,12 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
 
         try {
             insertTokenPrepStmt = connection.prepareStatement(sql);
-            insertTokenPrepStmt.setString(1, getPersistenceProcessor().getProcessedAccessTokenIdentifier(accessToken));
+            insertTokenPrepStmt.setString(1,
+                    getPersistenceProcessor().getProcessedAccessTokenIdentifier(tokenIdentifierToPersistInDB));
 
             if (accessTokenDO.getRefreshToken() != null) {
-                insertTokenPrepStmt.setString(2, getPersistenceProcessor().getProcessedRefreshToken(accessTokenDO.getRefreshToken()));
+                insertTokenPrepStmt.setString(2,
+                        getPersistenceProcessor().getProcessedRefreshToken(accessTokenDO.getRefreshToken()));
             } else {
                 insertTokenPrepStmt.setString(2, accessTokenDO.getRefreshToken());
             }
@@ -200,8 +209,8 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
             insertTokenPrepStmt.setString(13, accessTokenDO.getTokenId());
             insertTokenPrepStmt.setString(14, accessTokenDO.getGrantType());
             insertTokenPrepStmt.setString(15, accessTokenDO.getAuthzUser().getAuthenticatedSubjectIdentifier());
-            insertTokenPrepStmt
-                    .setString(16, getHashingPersistenceProcessor().getProcessedAccessTokenIdentifier(accessToken));
+            insertTokenPrepStmt.setString(16,
+                    getHashingPersistenceProcessor().getProcessedAccessTokenIdentifier(tokenReturnedToClient));
             if (accessTokenDO.getRefreshToken() != null) {
                 insertTokenPrepStmt.setString(17,
                         getHashingPersistenceProcessor().getProcessedRefreshToken(accessTokenDO.getRefreshToken()));
@@ -237,7 +246,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                 throw new IdentityOAuth2Exception(errorMsg, e);
             }
 
-            recoverFromConAppKeyConstraintViolation(accessToken, consumerKey, accessTokenDO, connection,
+            recoverFromConAppKeyConstraintViolation(tokenIdentifierToPersistInDB, consumerKey, accessTokenDO, connection,
                     userStoreDomain, retryAttemptCounter + 1);
         } catch (DataTruncation e) {
             IdentityDatabaseUtil.rollBack(connection);
@@ -256,7 +265,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                     throw new IdentityOAuth2Exception(errorMsg, e);
                 }
 
-                recoverFromConAppKeyConstraintViolation(accessToken, consumerKey, accessTokenDO,
+                recoverFromConAppKeyConstraintViolation(tokenIdentifierToPersistInDB, consumerKey, accessTokenDO,
                         connection, userStoreDomain, retryAttemptCounter + 1);
             } else {
                 throw new IdentityOAuth2Exception(
