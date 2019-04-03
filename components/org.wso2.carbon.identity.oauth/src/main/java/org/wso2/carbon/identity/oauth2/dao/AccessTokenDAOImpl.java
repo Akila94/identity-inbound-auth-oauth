@@ -119,7 +119,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                     "Authorized user should be available for further execution.");
         }
 
-        String tokenIdentifierToPersistInDB = tokenReturnedToClient;
+        String tokenAliasPersistedInDB = tokenReturnedToClient;
         try {
             OauthTokenIssuer oauthTokenIssuer = OAuth2Util.getOAuthTokenIssuerForOAuthApp(consumerKey);
             //check for persist alias for the token type
@@ -127,10 +127,13 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                 if (log.isDebugEnabled()) {
                     String scope = OAuth2Util.buildScopeString(accessTokenDO.getScope());
                     log.debug("OAuthTokenIssuer: " + oauthTokenIssuer.getClass().getName() + " persists an alias " +
-                            "of the returned access token for client_id:" + consumerKey + ", scope=" + scope +
-                            ", user=" + accessTokenDO.getAuthzUser().toFullQualifiedUsername());
+                            "of the returned access token for client_id:" + consumerKey + ", scope:" + scope +
+                            ", user:" + accessTokenDO.getAuthzUser().toFullQualifiedUsername());
                 }
-                tokenIdentifierToPersistInDB = oauthTokenIssuer.getAccessTokenHash(tokenReturnedToClient);
+                // For UUID access tokens the identifier/alias persisted in the DB is the actual token returned to
+                // the client in the token response. But for other token types like JWT access tokens, the token
+                // identifier persisted is an alias of the actual token returned to the client.
+                tokenAliasPersistedInDB = oauthTokenIssuer.getAccessTokenHash(tokenReturnedToClient);
             }
         } catch (OAuthSystemException e) {
             if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
@@ -185,7 +188,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
         try {
             insertTokenPrepStmt = connection.prepareStatement(sql);
             insertTokenPrepStmt.setString(1,
-                    getPersistenceProcessor().getProcessedAccessTokenIdentifier(tokenIdentifierToPersistInDB));
+                    getPersistenceProcessor().getProcessedAccessTokenIdentifier(tokenAliasPersistedInDB));
 
             if (accessTokenDO.getRefreshToken() != null) {
                 insertTokenPrepStmt.setString(2,
@@ -246,7 +249,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                 throw new IdentityOAuth2Exception(errorMsg, e);
             }
 
-            recoverFromConAppKeyConstraintViolation(tokenIdentifierToPersistInDB, consumerKey, accessTokenDO, connection,
+            recoverFromConAppKeyConstraintViolation(tokenAliasPersistedInDB, consumerKey, accessTokenDO, connection,
                     userStoreDomain, retryAttemptCounter + 1);
         } catch (DataTruncation e) {
             IdentityDatabaseUtil.rollBack(connection);
@@ -265,7 +268,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                     throw new IdentityOAuth2Exception(errorMsg, e);
                 }
 
-                recoverFromConAppKeyConstraintViolation(tokenIdentifierToPersistInDB, consumerKey, accessTokenDO,
+                recoverFromConAppKeyConstraintViolation(tokenAliasPersistedInDB, consumerKey, accessTokenDO,
                         connection, userStoreDomain, retryAttemptCounter + 1);
             } else {
                 throw new IdentityOAuth2Exception(
