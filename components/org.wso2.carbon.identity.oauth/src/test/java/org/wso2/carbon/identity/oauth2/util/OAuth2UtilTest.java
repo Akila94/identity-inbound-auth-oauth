@@ -291,35 +291,11 @@ public class OAuth2UtilTest extends PowerMockIdentityBaseTest {
         when(oAuthAppDAO.getAppInformation(clientId)).thenReturn(appDO);
         PowerMockito.whenNew(OAuthAppDAO.class).withNoArguments().thenReturn(oAuthAppDAO);
 
-        when(oauthServerConfigurationMock.isClientSecretHashEnabled()).thenReturn(false);
+        when(oauthServerConfigurationMock.getPersistenceProcessor()).thenReturn(new PlainTextPersistenceProcessor());
         assertEquals(OAuth2Util.authenticateClient(clientId, clientSecret), expectedResult);
     }
 
-    @DataProvider(name = "authenticateClientWithHash")
-    public Object[][] authenticateClientWithHash() {
-
-        OAuthAppDO cachedOAuthappDO = new OAuthAppDO();
-        cachedOAuthappDO.setOauthConsumerKey(clientId);
-        cachedOAuthappDO.setOauthConsumerSecret("client_secret_hash");
-
-        final String CLIENT_SECRET_HASH_TO_FAIL = "4_EedLmABh_cPdmmYxCTwRdyDG5b";
-        OAuthAppDO oauthAppToFailAuthentication = new OAuthAppDO();
-        oauthAppToFailAuthentication.setOauthConsumerKey(clientId);
-        oauthAppToFailAuthentication.setOauthConsumerSecret(CLIENT_SECRET_HASH_TO_FAIL);
-
-        // cacheResult
-        // dummyClientSecret
-        // expectedResult
-        return new Object[][]{
-                {null, null, false},
-                {null, "client_secret_hash", true},
-                {cachedOAuthappDO, "client_secret_hash", true},
-                {null, CLIENT_SECRET_HASH_TO_FAIL, false},
-                {oauthAppToFailAuthentication, CLIENT_SECRET_HASH_TO_FAIL, false},
-        };
-    }
-
-    @Test(dataProvider = "authenticateClientWithHash")
+    @Test(dataProvider = "AuthenticateClient")
     public void testAuthenticateClientWithHashPersistenceProcessor(Object cacheResult,
                                                                    String clientSecretInDB,
                                                                    boolean expectedResult) throws Exception {
@@ -339,10 +315,8 @@ public class OAuth2UtilTest extends PowerMockIdentityBaseTest {
         when(oAuthAppDAO.getAppInformation(clientId)).thenReturn(appDO);
         PowerMockito.whenNew(OAuthAppDAO.class).withNoArguments().thenReturn(oAuthAppDAO);
 
-        when(oauthServerConfigurationMock.isClientSecretHashEnabled()).thenReturn(true);
-
         TokenPersistenceProcessor hashingProcessor = mock(HashingPersistenceProcessor.class);
-        when(hashingProcessor.getProcessedClientSecret(clientSecret)).thenReturn("client_secret_hash");
+        when(hashingProcessor.getProcessedClientSecret(clientSecret)).thenReturn(clientSecret);
 
         when(oauthServerConfigurationMock.getPersistenceProcessor()).thenReturn(hashingProcessor);
         assertEquals(OAuth2Util.authenticateClient(clientId, clientSecret), expectedResult);
