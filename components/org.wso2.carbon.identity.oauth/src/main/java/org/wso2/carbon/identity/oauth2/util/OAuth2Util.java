@@ -417,16 +417,11 @@ public class OAuth2Util {
 
         String appClientSecret = appDO.getOauthConsumerSecret();
 
-        if (OAuthServerConfiguration.getInstance().isClientSecretHashEnabled()) {
-            TokenPersistenceProcessor persistenceProcessor = getPersistenceProcessor();
-            // If hashing is enabled, Then we need to compare the hash of the provided client_secret with the
-            // hash stored in DB
-            clientSecretProvided = persistenceProcessor.getProcessedClientSecret(clientSecretProvided);
-        }
-
+        TokenPersistenceProcessor persistenceProcessor = getPersistenceProcessor();
         // We convert the provided client_secret to the processed form stored in the DB.
+        String processedProvidedClientSecret = persistenceProcessor.getProcessedClientSecret(clientSecretProvided);
 
-        if (!StringUtils.equals(appClientSecret, clientSecretProvided)) {
+        if (!StringUtils.equals(appClientSecret, processedProvidedClientSecret)) {
             if (log.isDebugEnabled()) {
                 log.debug("Provided the Client ID : " + clientId +
                         " and Client Secret do not match with the issued credentials.");
