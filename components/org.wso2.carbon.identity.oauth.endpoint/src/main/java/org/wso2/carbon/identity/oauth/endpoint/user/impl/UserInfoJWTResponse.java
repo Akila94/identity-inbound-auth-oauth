@@ -110,23 +110,15 @@ public class UserInfoJWTResponse extends AbstractUserInfoResponseBuilder {
         return signingTenantDomain;
     }
 
-    private String getAuthzUserTenantDomain(OAuth2TokenValidationResponseDTO tokenResponse) throws UserInfoEndpointException {
-        AccessTokenDO accessTokenDO = getAccessTokenDO(tokenResponse.getAuthorizationContextToken().getTokenString());
-        return accessTokenDO.getAuthzUser().getTenantDomain();
-    }
+    private String getAuthzUserTenantDomain(OAuth2TokenValidationResponseDTO tokenResponse)
+            throws UserInfoEndpointException {
 
-    private AccessTokenDO getAccessTokenDO(String accessToken) throws UserInfoEndpointException {
-        AccessTokenDO accessTokenDO;
+        AccessTokenDO accessTokenDO = null;
         try {
-            accessTokenDO = OAuth2Util.getAccessTokenDOfromTokenIdentifier(accessToken);
+            accessTokenDO = OAuth2Util.findAccessToken(tokenResponse.getAuthorizationContextToken().getTokenString());
         } catch (IdentityOAuth2Exception e) {
-            throw new UserInfoEndpointException("Error occurred retrieving access token.", e);
+            throw new UserInfoEndpointException("Error occured while obtaining access token details.", e);
         }
-
-        if (accessTokenDO == null) {
-            // this means the token is not active so we can't proceed further
-            throw new UserInfoEndpointException(OAuthError.ResourceResponse.INVALID_TOKEN, "Invalid Access Token.");
-        }
-        return accessTokenDO;
+        return accessTokenDO.getAuthzUser().getTenantDomain();
     }
 }
