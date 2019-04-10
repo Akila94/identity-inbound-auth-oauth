@@ -160,7 +160,7 @@ public class TokenValidationHandler {
         }
 
         try {
-            accessTokenDO = OAuth2Util.findAccessToken(requestDTO.getAccessToken().getIdentifier());
+            accessTokenDO = OAuth2Util.findAccessToken(requestDTO.getAccessToken().getIdentifier(), false);
         } catch (IllegalArgumentException e) {
             // Access token not found in the system.
             return buildClientAppErrorResponse(e.getMessage());
@@ -263,7 +263,7 @@ public class TokenValidationHandler {
         } else {
 
             try {
-                accessTokenDO = OAuth2Util.findAccessToken(validationRequest.getAccessToken().getIdentifier());
+                accessTokenDO = OAuth2Util.findAccessToken(validationRequest.getAccessToken().getIdentifier(), false);
             } catch (IllegalArgumentException e) {
                 // access token not found in the system.
                 return buildIntrospectionErrorResponse(e.getMessage());

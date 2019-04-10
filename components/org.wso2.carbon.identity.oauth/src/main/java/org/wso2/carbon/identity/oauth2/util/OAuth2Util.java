@@ -1324,6 +1324,13 @@ public class OAuth2Util {
     public static AccessTokenDO getAccessTokenDOfromTokenIdentifier(String accessTokenIdentifier) throws
             IdentityOAuth2Exception {
 
+        return getAccessTokenDOFromTokenIdentifier(accessTokenIdentifier, false);
+    }
+
+    public static AccessTokenDO getAccessTokenDOFromTokenIdentifier(String accessTokenIdentifier,
+                                                                    boolean includeExpired)
+            throws IdentityOAuth2Exception {
+
         boolean cacheHit = false;
         AccessTokenDO accessTokenDO = null;
 
@@ -1339,7 +1346,7 @@ public class OAuth2Util {
         // cache miss, load the access token info from the database.
         if (accessTokenDO == null) {
             accessTokenDO = OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                    .getAccessToken(accessTokenIdentifier, false);
+                    .getAccessToken(accessTokenIdentifier, includeExpired);
         }
 
         if (accessTokenDO == null) {
@@ -2611,7 +2618,8 @@ public class OAuth2Util {
      * @return AccessTokenDO
      * @throws IdentityOAuth2Exception
      */
-    public static AccessTokenDO findAccessToken(String tokenIdentifier) throws IdentityOAuth2Exception {
+    public static AccessTokenDO findAccessToken(String tokenIdentifier, boolean includeExpired)
+            throws IdentityOAuth2Exception {
 
         AccessTokenDO accessTokenDO;
 
@@ -2623,11 +2631,11 @@ public class OAuth2Util {
                 getDefaultOauthTokenIssuerMap(allOAuthTokenIssuerMap);
 
         // First try default token issuers.
-        accessTokenDO = getAccessTokenDO(tokenIdentifier, defaultOAuthTokenIssuerMap);
+        accessTokenDO = getAccessTokenDO(tokenIdentifier, defaultOAuthTokenIssuerMap, includeExpired);
         if (accessTokenDO != null) return accessTokenDO;
 
         // Loop through other issuer and try to get the hash.
-        return getAccessTokenDO(tokenIdentifier, allOAuthTokenIssuerMap);
+        return getAccessTokenDO(tokenIdentifier, allOAuthTokenIssuerMap, includeExpired);
     }
 
     /**
@@ -2663,7 +2671,7 @@ public class OAuth2Util {
      * @throws IdentityOAuth2Exception
      */
     private static AccessTokenDO getAccessTokenDO(String tokenIdentifier,
-                                           Map<String, OauthTokenIssuer> tokenIssuerMap)
+                                           Map<String, OauthTokenIssuer> tokenIssuerMap, boolean includeExpired)
             throws IdentityOAuth2Exception {
 
         AccessTokenDO accessTokenDO;
@@ -2672,9 +2680,9 @@ public class OAuth2Util {
                 OauthTokenIssuer oauthTokenIssuer = oauthTokenIssuerEntry.getValue();
                 String tokenAlias = oauthTokenIssuer.getAccessTokenHash(tokenIdentifier);
                 if (oauthTokenIssuer.usePersistedAccessTokenAlias()) {
-                    accessTokenDO =  OAuth2Util.getAccessTokenDOfromTokenIdentifier(tokenAlias);
+                    accessTokenDO =  OAuth2Util.getAccessTokenDOFromTokenIdentifier(tokenAlias, includeExpired);
                 } else {
-                    accessTokenDO =  OAuth2Util.getAccessTokenDOfromTokenIdentifier(tokenIdentifier);
+                    accessTokenDO =  OAuth2Util.getAccessTokenDOFromTokenIdentifier(tokenIdentifier, includeExpired);
                 }
                 if (accessTokenDO != null) {
                     return accessTokenDO;
