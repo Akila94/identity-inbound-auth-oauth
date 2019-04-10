@@ -356,5 +356,4 @@ public class ClaimUtil {
         }
         return accessTokenDO.getAccessToken();
     }
-
 }

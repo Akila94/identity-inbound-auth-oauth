@@ -20,11 +20,9 @@ package org.wso2.carbon.identity.oauth2.validators;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
@@ -37,10 +35,8 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
-import org.wso2.carbon.identity.oauth2.token.OauthTokenIssuer;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -166,7 +162,7 @@ public class TokenValidationHandler {
             return buildClientAppErrorResponse(e.getMessage());
         }
 
-        if (hasAcessTokenExpired(accessTokenDO)) {
+        if (hasAccessTokenExpired(accessTokenDO)) {
             return buildClientAppErrorResponse("Access token expired");
         }
         // Set the token expiration time
@@ -269,7 +265,7 @@ public class TokenValidationHandler {
                 return buildIntrospectionErrorResponse(e.getMessage());
             }
 
-            if (hasAcessTokenExpired(accessTokenDO)) {
+            if (hasAccessTokenExpired(accessTokenDO)) {
                 // token is not active. we do not need to worry about other details.
                 introResp.setActive(false);
                 return introResp;
@@ -461,7 +457,7 @@ public class TokenValidationHandler {
      * @return
      * @throws IdentityOAuth2Exception
      */
-    private boolean hasAcessTokenExpired(AccessTokenDO accessTokenDO) {
+    private boolean hasAccessTokenExpired(AccessTokenDO accessTokenDO) {
         // check whether the grant is expired
         if (accessTokenDO.getValidityPeriod() < 0) {
             if (log.isDebugEnabled()) {
