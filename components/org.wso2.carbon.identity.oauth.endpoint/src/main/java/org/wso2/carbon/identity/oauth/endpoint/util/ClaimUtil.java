@@ -335,7 +335,9 @@ public class ClaimUtil {
         return UserCoreUtil.removeDomainFromName(tenantAwareUsername);
     }
 
-    private static Map<ClaimMapping, String> getUserAttributesFromCache(OAuth2TokenValidationResponseDTO tokenResponse) {
+    private static Map<ClaimMapping, String> getUserAttributesFromCache(OAuth2TokenValidationResponseDTO tokenResponse)
+            throws UserInfoEndpointException {
+
         AuthorizationGrantCacheKey cacheKey = new AuthorizationGrantCacheKey(getAccessTokenIdentifier(tokenResponse));
         AuthorizationGrantCacheEntry cacheEntry = AuthorizationGrantCache.getInstance().getValueFromCacheByToken(cacheKey);
         if (cacheEntry == null) {
@@ -344,25 +346,16 @@ public class ClaimUtil {
         return cacheEntry.getUserAttributes();
     }
 
-    private static String getAccessToken(OAuth2TokenValidationResponseDTO tokenResponse) {
-        return tokenResponse.getAuthorizationContextToken().getTokenString();
-    }
+    private static String getAccessTokenIdentifier(OAuth2TokenValidationResponseDTO tokenResponse)
+            throws UserInfoEndpointException {
 
-    private static String getAccessTokenIdentifier(OAuth2TokenValidationResponseDTO tokenResponse) {
-
-        String accessToken = tokenResponse.getAuthorizationContextToken().getTokenString();
-        String tokenIdentifier = null;
+        AccessTokenDO accessTokenDO = null;
         try {
-            OauthTokenIssuer tokenIssuer = OAuth2Util.getTokenIssuer(accessToken);
-            if (tokenIssuer != null) {
-                tokenIdentifier = tokenIssuer.getAccessTokenHash(accessToken);
-            }
-        } catch (OAuthSystemException e) {
-            log.error("Error while getting token identifier", e);
+            accessTokenDO = OAuth2Util.findAccessToken(
+                    tokenResponse.getAuthorizationContextToken().getTokenString(), false);
         } catch (IdentityOAuth2Exception e) {
-            log.error("Error while retrieving token issuer", e);
+            throw new UserInfoEndpointException("Error occurred while obtaining access token.", e);
         }
-        return tokenIdentifier;
+        return accessTokenDO.getAccessToken();
     }
-
 }

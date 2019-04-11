@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -18,14 +18,11 @@
 
 package org.wso2.carbon.identity.oauth2.validators;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
@@ -38,8 +35,6 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
-import org.wso2.carbon.identity.oauth2.token.JWTTokenIssuer;
-import org.wso2.carbon.identity.oauth2.token.OauthTokenIssuer;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import java.util.Map;
@@ -161,13 +156,13 @@ public class TokenValidationHandler {
         }
 
         try {
-            accessTokenDO = findAccessToken(requestDTO.getAccessToken().getIdentifier());
+            accessTokenDO = OAuth2Util.findAccessToken(requestDTO.getAccessToken().getIdentifier(), false);
         } catch (IllegalArgumentException e) {
             // Access token not found in the system.
             return buildClientAppErrorResponse(e.getMessage());
         }
 
-        if (hasAcessTokenExpired(accessTokenDO)) {
+        if (hasAccessTokenExpired(accessTokenDO)) {
             return buildClientAppErrorResponse("Access token expired");
         }
         // Set the token expiration time
@@ -264,13 +259,13 @@ public class TokenValidationHandler {
         } else {
 
             try {
-                accessTokenDO = findAccessToken(validationRequest.getAccessToken().getIdentifier());
+                accessTokenDO = OAuth2Util.findAccessToken(validationRequest.getAccessToken().getIdentifier(), false);
             } catch (IllegalArgumentException e) {
                 // access token not found in the system.
                 return buildIntrospectionErrorResponse(e.getMessage());
             }
 
-            if (hasAcessTokenExpired(accessTokenDO)) {
+            if (hasAccessTokenExpired(accessTokenDO)) {
                 // token is not active. we do not need to worry about other details.
                 introResp.setActive(false);
                 return introResp;
@@ -462,7 +457,7 @@ public class TokenValidationHandler {
      * @return
      * @throws IdentityOAuth2Exception
      */
-    private boolean hasAcessTokenExpired(AccessTokenDO accessTokenDO) {
+    private boolean hasAccessTokenExpired(AccessTokenDO accessTokenDO) {
         // check whether the grant is expired
         if (accessTokenDO.getValidityPeriod() < 0) {
             if (log.isDebugEnabled()) {
@@ -479,82 +474,4 @@ public class TokenValidationHandler {
 
         return false;
     }
-
-    /**
-     * Find access token for token validation
-     *
-     * @param tokenIdentifier access token data object from the validation request
-     * @return
-     * @throws IdentityOAuth2Exception
-     */
-    private AccessTokenDO findAccessToken(String tokenIdentifier) throws IdentityOAuth2Exception {
-
-        String consumerKey = null;
-        OauthTokenIssuer oauthTokenIssuer = null;
-        if (isJWT(tokenIdentifier) || isIDTokenEncrypted(tokenIdentifier)) {
-            oauthTokenIssuer = new JWTTokenIssuer();
-        } else {
-            try {
-                consumerKey = OAuth2Util.getClientIdForAccessToken(tokenIdentifier);
-            } catch (IllegalArgumentException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Consumer key is not found for token identifier: " + tokenIdentifier, e);
-                }
-            }
-        }
-
-        try {
-            if (consumerKey != null) {
-                oauthTokenIssuer = OAuth2Util.getOAuthTokenIssuerForOAuthApp(consumerKey);
-            }
-
-            if (oauthTokenIssuer == null) {
-                //server level token issuer
-                oauthTokenIssuer = OAuthServerConfiguration.getInstance().getIdentityOauthTokenIssuer();
-                log.info("No token issuer is found for access token identifier. Hence default token issuer is used.");
-            }
-
-            if (oauthTokenIssuer.usePersistedAccessTokenAlias()) {
-                return OAuth2Util
-                        .getAccessTokenDOfromTokenIdentifier(oauthTokenIssuer.getAccessTokenHash(tokenIdentifier));
-            } else {
-                return OAuth2Util.getAccessTokenDOfromTokenIdentifier(tokenIdentifier);
-            }
-        } catch (OAuthSystemException e) {
-            if (log.isDebugEnabled()) {
-                if (IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
-                    log.debug("Error while getting access token hash from token: " + tokenIdentifier, e);
-                } else {
-                    log.debug("Error while getting access token hash.", e);
-                }
-            }
-            throw new IdentityOAuth2Exception("Error while getting access token hash.", e);
-        } catch (InvalidOAuthClientException e) {
-            throw new IdentityOAuth2Exception(
-                    "Error while retrieving oauth issuer for the app with clientId: " + consumerKey, e);
-        }
-    }
-
-    /**
-     * Return true if the token identifier is JWT.
-     *
-     * @param tokenIdentifier String JWT token identifier.
-     * @return  true for a JWT token.
-     */
-    private boolean isJWT(String tokenIdentifier) {
-        // JWT token contains 3 base64 encoded components separated by periods.
-        return StringUtils.countMatches(tokenIdentifier, ".") == 2;
-    }
-
-    /**
-     * Return true if the JWT id token is encrypted.
-     *
-     * @param idToken String JWT ID token.
-     * @return  Boolean state of encryption.
-     */
-    private boolean isIDTokenEncrypted(String idToken) {
-        // Encrypted ID token contains 5 base64 encoded components separated by periods.
-        return StringUtils.countMatches(idToken, ".") == 4;
-    }
-
 }

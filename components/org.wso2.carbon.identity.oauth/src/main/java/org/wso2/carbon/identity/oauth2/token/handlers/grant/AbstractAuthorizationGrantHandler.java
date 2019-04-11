@@ -359,6 +359,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     private OAuth2AccessTokenRespDTO generateNewAccessTokenResponse(OAuthTokenReqMessageContext tokReqMsgCtx, String scope,
             String consumerKey, AccessTokenDO existingTokenBean, OauthTokenIssuer oauthTokenIssuer)
             throws IdentityOAuth2Exception {
+
         OAuthAppDO oAuthAppBean = getoAuthApp(consumerKey);
         Timestamp timestamp = new Timestamp(new Date().getTime());
         long validityPeriodInMillis = getConfiguredExpiryTimeForApplication(tokReqMsgCtx, consumerKey, oAuthAppBean);
@@ -449,19 +450,63 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
         }
     }
 
-    private void updateCacheIfEnabled(AccessTokenDO newTokenBean, String scope) {
+    private void updateCacheIfEnabled(AccessTokenDO newTokenBean, String scope)
+            throws IdentityOAuth2Exception {
+
         if (isHashDisabled && cacheEnabled) {
-            OAuthCacheKey cacheKey = getOAuthCacheKey(scope, newTokenBean.getConsumerKey(), newTokenBean.getAuthzUser().toString());
-            oauthCache.addToCache(cacheKey, newTokenBean);
-            // Adding AccessTokenDO to improve validation performance
-            OAuthCacheKey accessTokenCacheKey = new OAuthCacheKey(newTokenBean.getAccessToken());
-            oauthCache.addToCache(accessTokenCacheKey, newTokenBean);
-            if (log.isDebugEnabled()) {
-                log.debug("Access token was added to OAuthCache for cache key : " + cacheKey.getCacheKeyString());
-                if (IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
-                    log.debug("Access token was added to OAuthCache for cache key(hashed) : "
-                            + DigestUtils.sha256Hex(accessTokenCacheKey.getCacheKeyString()));
+            OauthTokenIssuer tokenIssuer = null;
+            try {
+                OAuthCacheKey cacheKey =
+                        getOAuthCacheKey(scope, newTokenBean.getConsumerKey(), newTokenBean.getAuthzUser().toString());
+                oauthCache.addToCache(cacheKey, newTokenBean);
+                if (log.isDebugEnabled()) {
+                    log.debug("Access token was added to OAuthCache with cache key : " + cacheKey.getCacheKeyString());
                 }
+
+                // Adding AccessTokenDO to improve validation performance
+                addTokenDOtoCache(newTokenBean);
+
+            } catch (OAuthSystemException e) {
+                if (IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
+                    throw new IdentityOAuth2Exception("Error while getting the token alias from token issuer: " +
+                            tokenIssuer.toString() + " for the token: " + newTokenBean.getAccessToken(), e);
+                } else {
+                    throw new IdentityOAuth2Exception("Error while getting the token alias from token issuer: " +
+                            tokenIssuer.toString(), e);
+                }
+            } catch (InvalidOAuthClientException e) {
+                if (IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
+                    throw new IdentityOAuth2Exception("Error while getting the token issuer for the token: " +
+                            newTokenBean.getAccessToken(), e);
+                } else {
+                    throw new IdentityOAuth2Exception("Error while getting the token issuer", e);
+                }
+            }
+        }
+    }
+
+    /**
+     * There are cases where we store an 'alias' of the token returned to the client as the token inside IS.
+     * For example, in the case of JWT access tokens we store the 'jti' claim in the database instead of the
+     * actual JWT. Therefore we need to cache an AccessTokenDO with the stored token identifier.
+     *
+     * @param newTokenBean token DO to be added to the cache.
+     */
+    private void addTokenDOtoCache(AccessTokenDO newTokenBean)
+            throws OAuthSystemException, IdentityOAuth2Exception, InvalidOAuthClientException {
+
+        OauthTokenIssuer tokenIssuer = OAuth2Util.getOAuthTokenIssuerForOAuthApp(newTokenBean.getConsumerKey());
+        String tokenAlias = tokenIssuer.getAccessTokenHash(newTokenBean.getAccessToken());
+        OAuthCacheKey accessTokenCacheKey = new OAuthCacheKey(tokenAlias);
+        AccessTokenDO tokenDO = AccessTokenDO.clone(newTokenBean);
+        tokenDO.setAccessToken(tokenAlias);
+        oauthCache.addToCache(accessTokenCacheKey, tokenDO);
+        if (log.isDebugEnabled()) {
+            if (IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
+                log.debug("Access token DO was added to OAuthCache with cache key: "
+                        + accessTokenCacheKey.getCacheKeyString());
+            } else {
+                log.debug("Access token DO was added to OAuthCache");
             }
         }
     }

@@ -321,8 +321,7 @@ public class OAuth2Service extends AbstractAdmin {
                     }
 
                     if (accessTokenDO == null) {
-                        accessTokenDO = OAuthTokenPersistenceFactory.getInstance()
-                                .getAccessTokenDAO().getAccessToken(revokeRequestDTO.getToken(), true);
+                        accessTokenDO = OAuth2Util.findAccessToken(revokeRequestDTO.getToken(), true);
                         if (accessTokenDO == null) {
 
                             refreshTokenDO = OAuthTokenPersistenceFactory.getInstance()
@@ -380,12 +379,12 @@ public class OAuth2Service extends AbstractAdmin {
                         OAuthUtil.clearOAuthCache(revokeRequestDTO.getConsumerKey(), accessTokenDO.getAuthzUser(),
                                 OAuth2Util.buildScopeString(accessTokenDO.getScope()));
                         OAuthUtil.clearOAuthCache(revokeRequestDTO.getConsumerKey(), accessTokenDO.getAuthzUser());
-                        OAuthUtil.clearOAuthCache(revokeRequestDTO.getToken());
+                        OAuthUtil.clearOAuthCache(accessTokenDO.getAccessToken());
                         String scope = OAuth2Util.buildScopeString(accessTokenDO.getScope());
                         String authorizedUser = accessTokenDO.getAuthzUser().toString();
                         synchronized ((revokeRequestDTO.getConsumerKey() + ":" + authorizedUser + ":" + scope).intern()) {
                             OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                                    .revokeAccessTokens(new String[]{revokeRequestDTO.getToken()});
+                                    .revokeAccessTokens(new String[]{accessTokenDO.getAccessToken()});
                         }
                         addRevokeResponseHeaders(revokeResponseDTO,
                                 revokeRequestDTO.getToken(),
