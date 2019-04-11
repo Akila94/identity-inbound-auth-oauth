@@ -123,7 +123,6 @@ public class RequestObjectValidatorImpl implements RequestObjectValidator {
             long timeStampSkewMillis = OAuthServerConfiguration.getInstance().getTimeStampSkewInSeconds() * 1000;
             long expirationTimeInMillis = expirationTime.getTime();
             long currentTimeInMillis = System.currentTimeMillis();
-                    expirationTimeInMillis);
             if ((currentTimeInMillis + timeStampSkewMillis) > expirationTimeInMillis) {
                 String msg = "Request Object is expired." +
                         ", Expiration Time(ms) : " + expirationTimeInMillis +
