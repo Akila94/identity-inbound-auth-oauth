@@ -95,14 +95,15 @@ public class RequestObjectValidatorImpl implements RequestObjectValidator {
     public boolean validateRequestObject(RequestObject requestObject, OAuth2Parameters oAuth2Parameters)
             throws RequestObjectException {
 
-        boolean isValid = validateClientIdAndResponseType(requestObject, oAuth2Parameters);
+        boolean isValid = validateClientIdAndResponseType(requestObject, oAuth2Parameters) && checkExpirationTime
+                (requestObject);
         if (isParamPresent(requestObject, Constants.REQUEST_URI)) {
             isValid = false;
         } else if (isParamPresent(requestObject, Constants.REQUEST)) {
             isValid = false;
         } else if (requestObject.isSigned()) {
             isValid = isValidIssuer(requestObject, oAuth2Parameters) && isValidAudience(requestObject,
-                    oAuth2Parameters) && checkExpirationTime(requestObject);
+                    oAuth2Parameters);
         }
         return isValid;
     }
