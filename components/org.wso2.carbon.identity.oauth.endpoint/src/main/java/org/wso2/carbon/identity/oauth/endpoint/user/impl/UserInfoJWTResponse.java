@@ -107,7 +107,8 @@ public class UserInfoJWTResponse extends AbstractUserInfoResponseBuilder {
         if (isJWTSignedWithSPKey) {
             signingTenantDomain = spTenantDomain;
         } else {
-            signingTenantDomain = getAuthzUserTenantDomain(tokenResponse);
+            AccessTokenDO accessTokenDO = getAccessTokenDO(tokenResponse.getAuthorizationContextToken().getTokenString());
+            signingTenantDomain = accessTokenDO.getAuthzUser().getTenantDomain();
         }
         return signingTenantDomain;
     }
