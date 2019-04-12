@@ -326,10 +326,10 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
 
     private void removeAuthzCodesFromCache(Set<String> authorizationCodes) {
         if (CollectionUtils.isNotEmpty(authorizationCodes)) {
-            for (String accessToken : authorizationCodes) {
-                AuthorizationGrantCacheKey cacheKey = new AuthorizationGrantCacheKey(accessToken);
-                AuthorizationGrantCacheEntry cacheEntry = (AuthorizationGrantCacheEntry) AuthorizationGrantCache
-                        .getInstance().getValueFromCacheByToken(cacheKey);
+            for (String authorizationCode : authorizationCodes) {
+                AuthorizationGrantCacheKey cacheKey = new AuthorizationGrantCacheKey(authorizationCode);
+                AuthorizationGrantCacheEntry cacheEntry = AuthorizationGrantCache.getInstance()
+                        .getValueFromCacheByCode(cacheKey);
                 if (cacheEntry != null) {
                     AuthorizationGrantCache.getInstance().clearCacheEntryByCode(cacheKey);
                 }
@@ -341,8 +341,8 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
         if (CollectionUtils.isNotEmpty(accessTokens)) {
             for (String accessToken : accessTokens) {
                 AuthorizationGrantCacheKey cacheKey = new AuthorizationGrantCacheKey(accessToken);
-                AuthorizationGrantCacheEntry cacheEntry = (AuthorizationGrantCacheEntry) AuthorizationGrantCache
-                        .getInstance().getValueFromCacheByToken(cacheKey);
+                AuthorizationGrantCacheEntry cacheEntry = AuthorizationGrantCache.getInstance()
+                        .getValueFromCacheByToken(cacheKey);
                 if (cacheEntry != null) {
                     AuthorizationGrantCache.getInstance().clearCacheEntryByToken(cacheKey);
                 }
