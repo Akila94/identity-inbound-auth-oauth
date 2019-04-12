@@ -81,11 +81,13 @@ import org.wso2.carbon.identity.oauth.dto.ScopeDTO;
 import org.wso2.carbon.identity.oauth.internal.OAuthComponentServiceHolder;
 import org.wso2.carbon.identity.oauth.tokenprocessor.PlainTextPersistenceProcessor;
 import org.wso2.carbon.identity.oauth.tokenprocessor.TokenPersistenceProcessor;
+import org.wso2.carbon.identity.oauth.user.UserInfoEndpointException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.authz.OAuthAuthzReqMessageContext;
 import org.wso2.carbon.identity.oauth2.bean.OAuthClientAuthnContext;
 import org.wso2.carbon.identity.oauth2.config.SpOAuth2ExpiryTimeConfiguration;
 import org.wso2.carbon.identity.oauth2.dao.OAuthTokenPersistenceFactory;
+import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuthRevocationRequestDTO;
 import org.wso2.carbon.identity.oauth2.internal.OAuth2ServiceComponentHolder;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
@@ -2708,5 +2710,30 @@ public class OAuth2Util {
         defaultOAuthTokenIssuerMap.put(OAuthServerConfiguration.DEFAULT_TOKEN_TYPE,
                 allOAuthTokenIssuerMap.get(OAuthServerConfiguration.DEFAULT_TOKEN_TYPE));
         allOAuthTokenIssuerMap.remove(OAuthServerConfiguration.DEFAULT_TOKEN_TYPE);
+    }
+
+    /**
+     * Return access token identifier from OAuth2TokenValidationResponseDTO. This method validated the token against
+     * the cache and the DB.
+     *
+     * @param tokenResponse OAuth2TokenValidationResponseDTO object.
+     * @return extracted access token identifier.
+     * @throws UserInfoEndpointException
+     */
+    public static String getAccessTokenIdentifier(OAuth2TokenValidationResponseDTO tokenResponse)
+            throws UserInfoEndpointException {
+
+        AccessTokenDO accessTokenDO = null;
+        try {
+            accessTokenDO = OAuth2Util.findAccessToken(
+                    tokenResponse.getAuthorizationContextToken().getTokenString(), false);
+        } catch (IdentityOAuth2Exception e) {
+            throw new UserInfoEndpointException("Error occurred while obtaining access token.", e);
+        }
+
+        if (accessTokenDO != null) {
+            return accessTokenDO.getAccessToken();
+        }
+        return null;
     }
 }
