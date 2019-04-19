@@ -25,7 +25,7 @@
             <class name="org.wso2.carbon.identity.oauth2.token.handlers.grant.AbstractAuthorizationGrantHandlerTest"/>
             <class name="org.wso2.carbon.identity.oauth2.validators.JDBCScopeValidatorTest"/>
             <class name="org.wso2.carbon.identity.oauth2.validators.OIDCScopeHandlerTest"/>
-            <!-- <class name="org.wso2.carbon.identity.oauth2.validators.TokenValidationHandlerTest"/> -->
+            <class name="org.wso2.carbon.identity.oauth2.validators.TokenValidationHandlerTest"/>
             <class name="org.wso2.carbon.identity.oauth2.validators.DefaultOAuth2TokenValidatorTest"/>
             <class name="org.wso2.carbon.identity.oauth2.validators.OAuth2TokenValidationMessageContextTest"/>
             <class name="org.wso2.carbon.identity.oauth2.authz.handlers.CodeResponseTypeHandlerTest"/>
