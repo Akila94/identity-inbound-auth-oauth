@@ -26,10 +26,11 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.wso2.carbon.identity.oauth.user.UserInfoEndpointException;
 
-import java.io.IOException;
-import java.util.Scanner;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.HttpHeaders;
+
+import java.util.Scanner;
 
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -42,98 +43,119 @@ public class UserInfoISAccessTokenValidatorTest extends PowerMockTestCase {
     private HttpServletRequest httpServletRequest;
     @Mock
     private Scanner scanner;
+
     private UserInforRequestDefaultValidator userInforRequestDefaultValidator;
-    private final String TOKEN = "ZWx1c3VhcmlvOnlsYWNsYXZl";
-    private final String BASIC_AUTH_HEADER = "Bearer " + TOKEN;
-    private static String CONTENT_TYPE_HEADER_VALUE = "application/x-www-form-urlencoded";
+    private final String ACCESS_TOKEN = "ZWx1c3VhcmlvOnlsYWNsYXZl";
+    private final String AUTHORIZATION_HEADER_VALUE = "Bearer " + ACCESS_TOKEN;
+    private static String ALLOWED_CONTENT_TYPE_HEADER_VALUE = "application/x-www-form-urlencoded";
 
     @BeforeClass
     public void setup() {
         userInforRequestDefaultValidator = new UserInforRequestDefaultValidator();
     }
 
-    @Test
-    public void testValidateToken() throws Exception {
-        prepareHttpServletRequest(BASIC_AUTH_HEADER, null);
-        assertEquals(BASIC_AUTH_HEADER.split(" ")[1], userInforRequestDefaultValidator.validateRequest
-                (httpServletRequest));
+    @DataProvider
+    public Object[][] getValidUserInfoInput() {
+
+        return new Object[][]{
+                {AUTHORIZATION_HEADER_VALUE, null, null, HttpMethod.GET, null},
+                {AUTHORIZATION_HEADER_VALUE, null, null, HttpMethod.POST, null},
+                {null, ACCESS_TOKEN, null, HttpMethod.GET, null},
+                {null, ACCESS_TOKEN, null, HttpMethod.POST, null},
+                {null, null, "access_token=" + ACCESS_TOKEN, HttpMethod.POST, ALLOWED_CONTENT_TYPE_HEADER_VALUE},
+                {null, null, "xyz=abc&access_token=" + ACCESS_TOKEN + "&abc=yyy", HttpMethod.POST,
+                        ALLOWED_CONTENT_TYPE_HEADER_VALUE},
+                {null, null, "xyz=abc&access_token=" + ACCESS_TOKEN, HttpMethod.POST, ALLOWED_CONTENT_TYPE_HEADER_VALUE}
+        };
+    }
+
+    @Test(dataProvider = "getValidUserInfoInput")
+    public void testValidateToken(String authzHeaderValue,
+                                  String accessTokenInRequestBody,
+                                  String requestBody,
+                                  String httpMethod,
+                                  String contentType) throws Exception {
+
+        prepareHttpServletRequest(authzHeaderValue, accessTokenInRequestBody, httpMethod, contentType);
+
+        whenNew(Scanner.class).withAnyArguments().thenReturn(scanner);
+        when(scanner.hasNextLine()).thenReturn(true, false);
+        when(scanner.nextLine()).thenReturn(requestBody);
+
+        assertEquals(userInforRequestDefaultValidator.validateRequest(httpServletRequest), ACCESS_TOKEN);
     }
 
     @DataProvider
     public Object[][] getInvalidAuthorizations() {
+
         return new Object[][]{
-                {TOKEN, null},
-                {"Bearer", null},
-                {null, "application/text"},
-                {null, ""},
+                {ACCESS_TOKEN, null, null},
+                {"Bearer", null, null},
+                {"Bearer       ", null, null},
+                {"Basic " + ACCESS_TOKEN, null, null},
+                {null, null, null},
+                {null, "", null},
+                {"", "", ""}
         };
     }
 
     @Test(dataProvider = "getInvalidAuthorizations", expectedExceptions = UserInfoEndpointException.class)
-    public void testValidateTokenInvalidAuthorization(String authorization, String contentType) throws Exception {
-        prepareHttpServletRequest(authorization, contentType);
+    public void testValidateTokenInvalidAuthorization(String authorizationHeaderValue,
+                                                      String accessTokenInRequestBody,
+                                                      String requestBody) throws Exception {
+
+        prepareHttpServletRequest(authorizationHeaderValue, accessTokenInRequestBody);
+
+        whenNew(Scanner.class).withAnyArguments().thenReturn(scanner);
+        when(scanner.hasNextLine()).thenReturn(true, false);
+        when(scanner.nextLine()).thenReturn(requestBody);
+
         userInforRequestDefaultValidator.validateRequest(httpServletRequest);
     }
 
     @DataProvider
-    public Object[][] requestBody() {
+    public Object[][] getInvalidRequestBodyContent() {
+
         return new Object[][]{
-                {CONTENT_TYPE_HEADER_VALUE, "", null},
-                {CONTENT_TYPE_HEADER_VALUE, null, null},
-                {CONTENT_TYPE_HEADER_VALUE, "access_token=" + TOKEN, TOKEN},
-                {CONTENT_TYPE_HEADER_VALUE, "access_token=" + TOKEN +
-                        "&someOtherParam=value", TOKEN},
-                {CONTENT_TYPE_HEADER_VALUE, "otherParam=value2&access_token=" + TOKEN +
-                        "&someOtherParam=value", TOKEN},
+                {"access_token=" + ACCESS_TOKEN, HttpMethod.GET, ALLOWED_CONTENT_TYPE_HEADER_VALUE},
+                {"access_token=" + ACCESS_TOKEN, HttpMethod.POST, null},
+                {"access_token=" + ACCESS_TOKEN, HttpMethod.POST, ""},
+                {"access_token=" + ACCESS_TOKEN, HttpMethod.POST, "application/json"}
         };
     }
 
-    @Test(dataProvider = "requestBody")
-    public void testValidateTokenWithRequestBodySuccess(String contentType, String requestBody, String expected) throws
-            Exception {
-        String token = testValidateTokenWithRequestBody(contentType, requestBody, true);
-        assertEquals(token, expected, "Expected token did not receive");
+
+    @Test(dataProvider = "getInvalidRequestBodyContent", expectedExceptions = UserInfoEndpointException.class)
+    public void testInvalidRequestsWithTokenInRequestBody(String requestBody,
+                                                          String httpMethod,
+                                                          String contentType) throws Exception {
+
+        whenNew(Scanner.class).withAnyArguments().thenReturn(scanner);
+        when(scanner.hasNextLine()).thenReturn(true, false);
+        when(scanner.nextLine()).thenReturn(requestBody);
+
+        when(httpServletRequest.getMethod()).thenReturn(httpMethod);
+        when(httpServletRequest.getContentType()).thenReturn(contentType);
+
+        userInforRequestDefaultValidator.validateRequest(httpServletRequest);
     }
 
-    @DataProvider
-    public Object[][] requestBodyWithNonASCII() {
-        return new Object[][]{
-                {CONTENT_TYPE_HEADER_VALUE, "access_token=" + "¥" + TOKEN, TOKEN},
-                {CONTENT_TYPE_HEADER_VALUE, "access_token=" + "§" + TOKEN +
-                        "&someOtherParam=value", TOKEN},
-                {CONTENT_TYPE_HEADER_VALUE, "otherParam=value2©&access_token=" + TOKEN +
-                        "&someOtherParam=value", TOKEN},
-        };
+
+    private void prepareHttpServletRequest(String authorizationHeaderValue,
+                                           String accessTokenInRequestBody,
+                                           String httpMethod,
+                                           String contentType) {
+
+        when(httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authorizationHeaderValue);
+        when(httpServletRequest.getParameter("access_token")).thenReturn(accessTokenInRequestBody);
+        when(httpServletRequest.getMethod()).thenReturn(httpMethod);
+        when(httpServletRequest.getContentType()).thenReturn(contentType);
     }
 
-//    @Test(dataProvider = "requestBodyWithNonASCII", expectedExceptions = UserInfoEndpointException.class)
-//    public void testValidateTokenWithRequestBodyNonASCII(String contentType, String requestBody, String expected) throws
-//            Exception {
-//        testValidateTokenWithRequestBody(contentType, requestBody, true);
-//    }
+    private void prepareHttpServletRequest(String authorizationHeaderValue,
+                                           String accessTokenInRequestBody) {
 
-    @Test(expectedExceptions = UserInfoEndpointException.class)
-    public void testValidateTokenWithWrongInputStream() throws Exception {
-        testValidateTokenWithRequestBody(CONTENT_TYPE_HEADER_VALUE, "access_token=" + TOKEN, false);
-    }
-
-    private String testValidateTokenWithRequestBody(String contentType, String requestBody, boolean mockScanner)
-            throws Exception {
-        prepareHttpServletRequest(null, contentType);
-        if (mockScanner) {
-            whenNew(Scanner.class).withAnyArguments().thenReturn(scanner);
-            when(scanner.hasNextLine()).thenReturn(true, false);
-            when(scanner.nextLine()).thenReturn(requestBody);
-        } else {
-            when(httpServletRequest.getInputStream()).thenThrow(new IOException());
-        }
-
-        String token = userInforRequestDefaultValidator.validateRequest(httpServletRequest);
-        return token;
-    }
-
-    private void prepareHttpServletRequest(String authorization, String contentType) {
-        when(httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authorization);
-        when(httpServletRequest.getHeader(HttpHeaders.CONTENT_TYPE)).thenReturn(contentType);
+        when(httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authorizationHeaderValue);
+        when(httpServletRequest.getParameter("access_token")).thenReturn(accessTokenInRequestBody);
     }
 }
