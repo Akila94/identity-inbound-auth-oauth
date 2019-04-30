@@ -950,7 +950,7 @@ public class OAuth2AuthzEndpoint {
         AuthenticatedUser loggedInUser = getLoggedInUser(oAuthMessage);
         String clientId = oauth2Params.getClientId();
 
-        if (!(isOpenIDConnectConsentSkipped() || isConsentSkippedForSP(oAuthMessage))) {
+        if (!(isOpenIDConnectConsentSkipped() || isConsentSkippedForSP(oauth2Params))) {
             boolean approvedAlways = OAuthConstants.Consent.APPROVE_ALWAYS.equals(consent);
             if (approvedAlways) {
                 OpenIDConnectUserRPStore.getInstance().putUserRPToStore(loggedInUser, applicationName,
@@ -1724,7 +1724,7 @@ public class OAuth2AuthzEndpoint {
                                  AuthenticatedUser authenticatedUser, boolean hasUserApproved)
             throws OAuthSystemException, ConsentHandlingFailedException {
 
-        if (isOpenIDConnectConsentSkipped() || isConsentSkippedForSP(oAuthMessage)) {
+        if (isOpenIDConnectConsentSkipped() || isConsentSkippedForSP(oauth2Params)) {
             sessionState.setAddSessionState(true);
             return handleUserConsent(oAuthMessage, APPROVE, sessionState);
         } else if (hasUserApproved) {
@@ -1799,9 +1799,9 @@ public class OAuth2AuthzEndpoint {
         return getOAuthServerConfiguration().getOpenIDConnectSkipeUserConsentConfig();
     }
 
-    private boolean isConsentSkippedForSP(OAuthMessage oAuthMessage) throws OAuthSystemException {
+    private boolean isConsentSkippedForSP(OAuth2Parameters oauth2Params) throws OAuthSystemException {
 
-        ServiceProvider serviceProvider = getServiceProvider(oAuthMessage.getClientId());
+        ServiceProvider serviceProvider = getServiceProvider(oauth2Params.getClientId());
 
         for (ServiceProviderProperty serviceProviderProperty : serviceProvider.getSpProperties()) {
             if (serviceProviderProperty.getName().equals(IdentityConstants.SKIP_CONSENT)
@@ -1965,7 +1965,7 @@ public class OAuth2AuthzEndpoint {
             throws OAuthSystemException, ConsentHandlingFailedException, OAuthProblemException {
 
         sessionState.setAddSessionState(true);
-        if (isOpenIDConnectConsentSkipped() || isConsentSkippedForSP(oAuthMessage)) {
+        if (isOpenIDConnectConsentSkipped() || isConsentSkippedForSP(oauth2Params)) {
             return handleUserConsent(oAuthMessage, APPROVE, sessionState);
         } else if (hasUserApproved) {
             return handleApprovedAlwaysWithoutPromptingForNewConsent(oAuthMessage, sessionState, oauth2Params);
