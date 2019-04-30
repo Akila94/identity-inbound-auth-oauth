@@ -950,7 +950,9 @@ public class OAuth2AuthzEndpoint {
         AuthenticatedUser loggedInUser = getLoggedInUser(oAuthMessage);
         String clientId = oauth2Params.getClientId();
 
-        if (!(isOpenIDConnectConsentSkipped() || isConsentSkippedForSP(oauth2Params))) {
+        ServiceProvider serviceProvider = getServiceProvider(oauth2Params.getClientId());
+
+        if (!(isOpenIDConnectConsentSkipped() || FrameworkUtils.isConsentPageSkippedForSP(serviceProvider))) {
             boolean approvedAlways = OAuthConstants.Consent.APPROVE_ALWAYS.equals(consent);
             if (approvedAlways) {
                 OpenIDConnectUserRPStore.getInstance().putUserRPToStore(loggedInUser, applicationName,
@@ -1724,7 +1726,9 @@ public class OAuth2AuthzEndpoint {
                                  AuthenticatedUser authenticatedUser, boolean hasUserApproved)
             throws OAuthSystemException, ConsentHandlingFailedException {
 
-        if (isOpenIDConnectConsentSkipped() || isConsentSkippedForSP(oauth2Params)) {
+        ServiceProvider serviceProvider = getServiceProvider(oauth2Params.getClientId());
+
+        if (isOpenIDConnectConsentSkipped() || FrameworkUtils.isConsentPageSkippedForSP(serviceProvider)) {
             sessionState.setAddSessionState(true);
             return handleUserConsent(oAuthMessage, APPROVE, sessionState);
         } else if (hasUserApproved) {
@@ -1797,20 +1801,6 @@ public class OAuth2AuthzEndpoint {
     private boolean isOpenIDConnectConsentSkipped() {
 
         return getOAuthServerConfiguration().getOpenIDConnectSkipeUserConsentConfig();
-    }
-
-    private boolean isConsentSkippedForSP(OAuth2Parameters oauth2Params) throws OAuthSystemException {
-
-        ServiceProvider serviceProvider = getServiceProvider(oauth2Params.getClientId());
-
-        for (ServiceProviderProperty serviceProviderProperty : serviceProvider.getSpProperties()) {
-            if (serviceProviderProperty.getName().equals(IdentityConstants.SKIP_CONSENT)
-                    && Boolean.parseBoolean(serviceProviderProperty.getValue())) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private boolean isConsentFromUserRequired(String preConsentQueryParams) {
@@ -1964,8 +1954,9 @@ public class OAuth2AuthzEndpoint {
                                                    OAuth2Parameters oauth2Params, boolean hasUserApproved)
             throws OAuthSystemException, ConsentHandlingFailedException, OAuthProblemException {
 
+        ServiceProvider serviceProvider = getServiceProvider(oauth2Params.getClientId());
         sessionState.setAddSessionState(true);
-        if (isOpenIDConnectConsentSkipped() || isConsentSkippedForSP(oauth2Params)) {
+        if (isOpenIDConnectConsentSkipped() || FrameworkUtils.isConsentPageSkippedForSP(serviceProvider)) {
             return handleUserConsent(oAuthMessage, APPROVE, sessionState);
         } else if (hasUserApproved) {
             return handleApprovedAlwaysWithoutPromptingForNewConsent(oAuthMessage, sessionState, oauth2Params);
