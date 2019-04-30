@@ -23,6 +23,8 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.F
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.application.common.model.RoleMapping;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
+import org.wso2.carbon.identity.application.common.model.ServiceProviderProperty;
+import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheEntry;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheKey;
@@ -100,9 +102,10 @@ public class OIDCClaimUtil {
                                                                      AuthenticatedUser authenticatedUser,
                                                                      String clientId,
                                                                      String spTenantDomain,
-                                                                     String grantType) {
+                                                                     String grantType,
+                                                                     ServiceProvider serviceProvider) {
 
-        if (isConsentBasedClaimFilteringApplicable(grantType)) {
+        if (isConsentBasedClaimFilteringApplicable(grantType) && !isConsentSkippedForSP(serviceProvider)) {
             return OpenIDConnectServiceComponentHolder.getInstance()
                     .getHighestPriorityOpenIDConnectClaimFilter()
                     .getClaimsFilteredByUserConsent(userClaims, authenticatedUser, clientId, spTenantDomain);
@@ -126,6 +129,19 @@ public class OIDCClaimUtil {
 
         return !OAuthServerConfiguration.getInstance().getOpenIDConnectSkipeUserConsentConfig();
     }
+
+    private static boolean isConsentSkippedForSP(ServiceProvider serviceProvider) {
+
+        for (ServiceProviderProperty serviceProviderProperty : serviceProvider.getSpProperties()) {
+            if (serviceProviderProperty.getName().equals(IdentityConstants.SKIP_CONSENT)
+                    && Boolean.parseBoolean(serviceProviderProperty.getValue())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
     /**
      * Check whether user consent based claim filtering is applicable for the grant type.

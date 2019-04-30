@@ -638,6 +638,7 @@ public class OAuth2AuthzEndpointTest extends TestOAuthEndpointBase {
         requestParams.put(FrameworkConstants.RequestParams.TO_COMMONAUTH, new String[]{"false"});
         requestParams.put(OAuthConstants.OAuth20Params.SCOPE, new String[]{OAuthConstants.Scope.OPENID});
         requestParams.put(OAuthConstants.Prompt.CONSENT, new String[]{consent});
+        requestParams.put(CLIENT_ID, new String[]{CLIENT_ID_VALUE});
 
         requestAttributes.put(FrameworkConstants.RequestParams.FLOW_STATUS, AuthenticatorFlowStatus.INCOMPLETE);
 
@@ -960,6 +961,7 @@ public class OAuth2AuthzEndpointTest extends TestOAuthEndpointBase {
         requestParams.put(FrameworkConstants.RequestParams.TO_COMMONAUTH, new String[]{"false"});
         requestParams.put(OAuthConstants.OAuth20Params.SCOPE, new String[]{OAuthConstants.Scope.OPENID});
         requestParams.put(OAuthConstants.Prompt.CONSENT, new String[]{consent});
+        requestParams.put(CLIENT_ID, new String[]{CLIENT_ID_VALUE});
 
         requestAttributes.put(FrameworkConstants.RequestParams.FLOW_STATUS, AuthenticatorFlowStatus.INCOMPLETE);
 
