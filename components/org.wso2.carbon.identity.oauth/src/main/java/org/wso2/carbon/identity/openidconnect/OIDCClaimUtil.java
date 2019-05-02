@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.RoleMapping;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
@@ -100,9 +101,10 @@ public class OIDCClaimUtil {
                                                                      AuthenticatedUser authenticatedUser,
                                                                      String clientId,
                                                                      String spTenantDomain,
-                                                                     String grantType) {
+                                                                     String grantType,
+                                                                     ServiceProvider serviceProvider) {
 
-        if (isConsentBasedClaimFilteringApplicable(grantType)) {
+        if (isConsentBasedClaimFilteringApplicable(grantType) && !FrameworkUtils.isConsentPageSkippedForSP(serviceProvider)) {
             return OpenIDConnectServiceComponentHolder.getInstance()
                     .getHighestPriorityOpenIDConnectClaimFilter()
                     .getClaimsFilteredByUserConsent(userClaims, authenticatedUser, clientId, spTenantDomain);
