@@ -33,12 +33,15 @@ import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.utils.CarbonUtils;
+
 import java.io.FileInputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import javax.jws.WebService;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -65,25 +68,30 @@ public class JwksEndpoint {
 
         try (FileInputStream file = new FileInputStream(keystorePath)) {
             int tenantId = IdentityTenantUtil.getTenantId(tenantDomain);
-            RSAPublicKey publicKey;
+            KeyStore keystore;
+            ArrayList<Certificate> certificates = new ArrayList<>();
             if (MultitenantConstants.SUPER_TENANT_DOMAIN_NAME.equalsIgnoreCase(tenantDomain)) {
-                KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+                keystore = KeyStore.getInstance(KeyStore.getDefaultType());
                 String password = CarbonUtils.getServerConfiguration().getFirstProperty(SECURITY_KEY_STORE_PW);
                 keystore.load(file, password.toCharArray());
-                String alias = CarbonUtils.getServerConfiguration().getFirstProperty(SECURITY_KEY_STORE_KEY_ALIAS);
-                // Get certificate of public key
-                publicKey = getRsaPublicKey(alias, keystore);
             } else {
                 if (isInvalidTenantId(tenantId)) {
                     String errorMessage = "Invalid Tenant: " + tenantDomain;
                     return logAndReturnError(errorMessage, null);
                 }
                 KeyStoreManager keyStoreManager = KeyStoreManager.getInstance(tenantId);
-                KeyStore keyStore = keyStoreManager.getKeyStore(generateKSNameFromDomainName(tenantDomain));
-                // Get certificate of public key
-                publicKey = getRsaPublicKey(tenantDomain, keyStore);
+                keystore = keyStoreManager.getKeyStore(generateKSNameFromDomainName(tenantDomain));
             }
-            return buildResponse(tenantDomain, tenantId, publicKey);
+            Enumeration enumeration = keystore.aliases();
+            while (enumeration.hasMoreElements()) {
+                String alias = (String) enumeration.nextElement();
+                if (keystore.isKeyEntry(alias)) {
+                    Certificate cert = keystore.getCertificate(alias);
+                    certificates.add(cert);
+                }
+            }
+            return buildResponse(certificates);
+
         } catch (Exception e) {
             String errorMessage = "Error while generating the keyset for " + tenantDomain + " tenant domain.";
             return logAndReturnError(errorMessage, e);
@@ -100,6 +108,22 @@ public class JwksEndpoint {
         jwk.algorithm(JWSAlgorithm.RS256);
         jwk.keyUse(KeyUse.parse(KEY_USE));
         jwksArray.put(jwk.build().toJSONObject());
+        jwksJson.put(KEYS, jwksArray);
+        return jwksJson.toString();
+    }
+
+    private String buildResponse(ArrayList<Certificate > certificates)
+            throws IdentityOAuth2Exception, ParseException {
+        JSONArray jwksArray = new JSONArray();
+        JSONObject jwksJson = new JSONObject();
+        for (Certificate cert : certificates ){
+            RSAPublicKey publicKey = (RSAPublicKey) cert.getPublicKey();
+            RSAKey.Builder jwk = new RSAKey.Builder(publicKey);
+            jwk.keyID(OAuth2Util.getThumbprint(cert));
+            jwk.algorithm(JWSAlgorithm.RS256);
+            jwk.keyUse(KeyUse.parse(KEY_USE));
+            jwksArray.put(jwk.build().toJSONObject());
+        }
         jwksJson.put(KEYS, jwksArray);
         return jwksJson.toString();
     }
