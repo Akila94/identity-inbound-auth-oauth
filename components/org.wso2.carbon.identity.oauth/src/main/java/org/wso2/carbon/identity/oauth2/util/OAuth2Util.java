@@ -2094,6 +2094,17 @@ public class OAuth2Util {
                 publicCertThumbprint.getBytes(Charsets.UTF_8)), Charsets.UTF_8);
     }
 
+    public static String getThumbprint(Certificate certificate) throws IdentityOAuth2Exception {
+        try {
+
+            return getThumbPrint(certificate);
+
+        } catch (Exception e) {
+            String error = "Error in obtaining thumbPrint for certificate ";
+            throw new IdentityOAuth2Exception(error, e);
+        }
+    }
+
     private static boolean isRSAAlgorithm(JWEAlgorithm algorithm) {
 
         return (JWEAlgorithm.RSA_OAEP.equals(algorithm) || JWEAlgorithm.RSA1_5.equals(algorithm) ||
