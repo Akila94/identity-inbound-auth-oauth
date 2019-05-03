@@ -47,6 +47,7 @@ import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -130,9 +131,9 @@ public class JwksEndpointTest extends PowerMockIdentityBaseTest {
 
         mockStatic(OAuth2Util.class);
         if (tenantDomain == null) {
-            when(OAuth2Util.getThumbPrint(anyString(), anyInt())).thenThrow(new IdentityOAuth2Exception("error"));
+            when(OAuth2Util.getThumbprint(any())).thenThrow(new IdentityOAuth2Exception("error"));
         } else {
-            when(OAuth2Util.getThumbPrint(anyString(), anyInt())).thenReturn(CERT_THUMB_PRINT);
+            when(OAuth2Util.getThumbprint(any())).thenReturn(CERT_THUMB_PRINT);
         }
 
         mockStatic(KeyStoreManager.class);
