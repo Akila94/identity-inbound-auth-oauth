@@ -38,6 +38,7 @@ import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.testutil.powermock.PowerMockIdentityBaseTest;
 import org.wso2.carbon.utils.CarbonUtils;
+
 import java.io.FileInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -131,9 +132,9 @@ public class JwksEndpointTest extends PowerMockIdentityBaseTest {
 
         mockStatic(OAuth2Util.class);
         if (tenantDomain == null) {
-            when(OAuth2Util.getThumbprint(any())).thenThrow(new IdentityOAuth2Exception("error"));
+            when(OAuth2Util.getThumbPrint(any(), anyString())).thenThrow(new IdentityOAuth2Exception("error"));
         } else {
-            when(OAuth2Util.getThumbprint(any())).thenReturn(CERT_THUMB_PRINT);
+            when(OAuth2Util.getThumbPrint(any(), anyString())).thenReturn(CERT_THUMB_PRINT);
         }
 
         mockStatic(KeyStoreManager.class);

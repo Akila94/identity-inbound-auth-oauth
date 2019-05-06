@@ -2094,13 +2094,17 @@ public class OAuth2Util {
                 publicCertThumbprint.getBytes(Charsets.UTF_8)), Charsets.UTF_8);
     }
 
-    public static String getThumbprint(Certificate certificate) throws IdentityOAuth2Exception {
+    public static String getThumbPrint(Certificate certificate,String alias) throws IdentityOAuth2Exception {
+
         try {
 
             return getThumbPrint(certificate);
 
-        } catch (Exception e) {
-            String error = "Error in obtaining thumbPrint for certificate ";
+        } catch (CertificateEncodingException e) {
+            String error = "Encoding error while obtaining thumbPrint for alias:" + alias;
+            throw new IdentityOAuth2Exception(error, e);
+        } catch (NoSuchAlgorithmException e) {
+            String error = "Error in obtaining SHA-1 thumbprint for alias: " + alias;
             throw new IdentityOAuth2Exception(error, e);
         }
     }
