@@ -241,8 +241,10 @@ public class OAuthAdminService extends AbstractAdmin {
                     }
                 }
 
-                AuthenticatedUser appOwner = getAppOwner(application, tenantAwareLoggedInUser, loggedInTenantDomain);
-                app.setUser(appOwner);
+                AuthenticatedUser defaultAppOwner =
+                        buildAuthenticatedUser(tenantAwareLoggedInUser, loggedInTenantDomain);
+                AuthenticatedUser appOwner = getAppOwner(application, defaultAppOwner);
+                app.setAppOwner(appOwner);
 
                 if (application.getOAuthVersion() != null) {
                     app.setOauthVersion(application.getOAuthVersion());
@@ -355,10 +357,11 @@ public class OAuthAdminService extends AbstractAdmin {
             throw new IdentityOAuthAdminException("Error while updating the app information.", e);
         }
 
-        String consumerKey = consumerAppDTO.getOauthConsumerKey();
-        AuthenticatedUser appOwner = getAppOwner(consumerAppDTO, tenantAwareLoggedInUsername, loggedInTenantDomain);
-
+        AuthenticatedUser defaultAppOwner = oauthappdo.getAppOwner();
+        AuthenticatedUser appOwner = getAppOwner(consumerAppDTO, defaultAppOwner);
         oauthappdo.setAppOwner(appOwner);
+
+        String consumerKey = consumerAppDTO.getOauthConsumerKey();
         oauthappdo.setOauthConsumerKey(consumerKey);
         oauthappdo.setOauthConsumerSecret(consumerAppDTO.getOauthConsumerSecret());
         oauthappdo.setCallbackUrl(consumerAppDTO.getCallbackUrl());
@@ -1183,12 +1186,10 @@ public class OAuthAdminService extends AbstractAdmin {
     }
 
     private AuthenticatedUser getAppOwner(OAuthConsumerAppDTO application,
-                                          String tenantAwareLoggedInUser,
-                                          String loggedInTenantDomain) throws IdentityOAuthAdminException {
+                                          AuthenticatedUser defaultAppOwner) throws IdentityOAuthAdminException {
 
         // We first set the logged in user as the owner.
-        AuthenticatedUser appOwner = buildAuthenticatedUser(tenantAwareLoggedInUser, loggedInTenantDomain);
-
+        AuthenticatedUser appOwner = defaultAppOwner;
         String applicationUser = application.getUsername();
         if (StringUtils.isNotBlank(applicationUser)) {
             String tenantAwareAppOwnerInRequest = MultitenantUtils.getTenantAwareUsername(applicationUser);
@@ -1197,11 +1198,12 @@ public class OAuthAdminService extends AbstractAdmin {
                         getUserStoreManager().isExistingUser(tenantAwareAppOwnerInRequest)) {
                     // Since the app owner sent in OAuthConsumerAppDTO is a valid one we set the appOwner to be
                     // the one sent in the OAuthConsumerAppDTO.
+                    String loggedInTenantDomain = CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
                     appOwner = buildAuthenticatedUser(tenantAwareAppOwnerInRequest, loggedInTenantDomain);
                 } else {
                     log.warn("OAuth application owner user name " + applicationUser +
-                            " does not exist in the user store. Using logged-in user name " + tenantAwareLoggedInUser +
-                            " as app owner name");
+                            " does not exist in the user store. Using user: " +
+                            defaultAppOwner.toFullQualifiedUsername() + " as app owner name.");
                 }
             } catch (UserStoreException e) {
                 throw handleError("Error while retrieving the user store manager for user: " + applicationUser, e);
