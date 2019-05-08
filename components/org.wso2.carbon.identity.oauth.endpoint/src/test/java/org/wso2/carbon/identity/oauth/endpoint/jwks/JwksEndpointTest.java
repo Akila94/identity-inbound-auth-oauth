@@ -17,6 +17,7 @@
  */
 package org.wso2.carbon.identity.oauth.endpoint.jwks;
 
+import com.nimbusds.jose.JWSAlgorithm;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -136,7 +137,7 @@ public class JwksEndpointTest extends PowerMockIdentityBaseTest {
         } else {
             when(OAuth2Util.getThumbPrint(any(), anyString())).thenReturn(CERT_THUMB_PRINT);
         }
-
+        when(OAuth2Util.mapSignatureAlgorithmForJWSAlgorithm(anyString())).thenReturn(JWSAlgorithm.RS256);
         mockStatic(KeyStoreManager.class);
         when(KeyStoreManager.getInstance(anyInt())).thenReturn(keyStoreManager);
         when(keyStoreManager.getKeyStore("foo-com.jks")).thenReturn(getKeyStoreFromFile("foo-com.jks", "foo.com"));
@@ -170,6 +171,7 @@ public class JwksEndpointTest extends PowerMockIdentityBaseTest {
         mockStatic(OAuthServerConfiguration.class);
         when(OAuthServerConfiguration.getInstance()).thenReturn(oAuthServerConfiguration);
         when(oAuthServerConfiguration.getPersistenceProcessor()).thenReturn(tokenPersistenceProcessor);
+        when(oAuthServerConfiguration.getIdTokenSignatureAlgorithm()).thenReturn("SHA256withRSA");
     }
 
     private KeyStore getKeyStoreFromFile(String keystoreName, String password) throws Exception {

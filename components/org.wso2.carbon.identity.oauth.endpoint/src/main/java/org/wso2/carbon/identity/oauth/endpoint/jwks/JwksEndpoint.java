@@ -30,13 +30,13 @@ import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
+import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.utils.CarbonUtils;
 
 import java.io.FileInputStream;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
@@ -104,13 +104,16 @@ public class JwksEndpoint {
 
         JSONArray jwksArray = new JSONArray();
         JSONObject jwksJson = new JSONObject();
+        OAuthServerConfiguration config = OAuthServerConfiguration.getInstance();
+        JWSAlgorithm signatureAlgorithm =
+                OAuth2Util.mapSignatureAlgorithmForJWSAlgorithm(config.getIdTokenSignatureAlgorithm());
         for (Map.Entry certKeyPair : certificates.entrySet()) {
             Certificate cert = (Certificate) certKeyPair.getValue();
             String alias = (String) certKeyPair.getKey();
             RSAPublicKey publicKey = (RSAPublicKey) cert.getPublicKey();
             RSAKey.Builder jwk = new RSAKey.Builder(publicKey);
             jwk.keyID(OAuth2Util.getThumbPrint(cert, alias));
-            jwk.algorithm(JWSAlgorithm.RS256);
+            jwk.algorithm(signatureAlgorithm);
             jwk.keyUse(KeyUse.parse(KEY_USE));
             jwksArray.put(jwk.build().toJSONObject());
         }
