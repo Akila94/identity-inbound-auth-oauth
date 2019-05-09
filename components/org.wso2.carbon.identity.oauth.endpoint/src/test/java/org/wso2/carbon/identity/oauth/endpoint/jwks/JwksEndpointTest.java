@@ -134,8 +134,10 @@ public class JwksEndpointTest extends PowerMockIdentityBaseTest {
         mockStatic(OAuth2Util.class);
         if (tenantDomain == null) {
             when(OAuth2Util.getThumbPrint(any(), anyString())).thenThrow(new IdentityOAuth2Exception("error"));
+            when(OAuth2Util.getKID(anyString(), any())).thenThrow(new IdentityOAuth2Exception("error"));
         } else {
             when(OAuth2Util.getThumbPrint(any(), anyString())).thenReturn(CERT_THUMB_PRINT);
+            when(OAuth2Util.getKID(anyString(), any())).thenReturn(CERT_THUMB_PRINT);
         }
         when(OAuth2Util.mapSignatureAlgorithmForJWSAlgorithm(anyString())).thenReturn(JWSAlgorithm.RS256);
         mockStatic(KeyStoreManager.class);
@@ -172,6 +174,8 @@ public class JwksEndpointTest extends PowerMockIdentityBaseTest {
         when(OAuthServerConfiguration.getInstance()).thenReturn(oAuthServerConfiguration);
         when(oAuthServerConfiguration.getPersistenceProcessor()).thenReturn(tokenPersistenceProcessor);
         when(oAuthServerConfiguration.getIdTokenSignatureAlgorithm()).thenReturn("SHA256withRSA");
+        when(serverConfiguration.getFirstProperty("Security.KeyStore.Password")).thenReturn("wso2carbon");
+        when(serverConfiguration.getFirstProperty("Security.KeyStore.KeyAlias")).thenReturn("wso2carbon");
     }
 
     private KeyStore getKeyStoreFromFile(String keystoreName, String password) throws Exception {
