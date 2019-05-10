@@ -173,8 +173,9 @@ public class JwksEndpointTest extends PowerMockIdentityBaseTest {
         when(OAuthServerConfiguration.getInstance()).thenReturn(oAuthServerConfiguration);
         when(oAuthServerConfiguration.getPersistenceProcessor()).thenReturn(tokenPersistenceProcessor);
         when(oAuthServerConfiguration.getIdTokenSignatureAlgorithm()).thenReturn("SHA256withRSA");
-        when(serverConfiguration.getFirstProperty("Security.KeyStore.Password")).thenReturn("wso2carbon");
-        when(serverConfiguration.getFirstProperty("Security.KeyStore.KeyAlias")).thenReturn("wso2carbon");
+        when(oAuthServerConfiguration.getSignatureAlgorithm()).thenReturn("SHA256withRSA");
+        when(oAuthServerConfiguration.getUserInfoJWTSignatureAlgorithm()).thenReturn("SHA256withRSA");
+
     }
 
     private KeyStore getKeyStoreFromFile(String keystoreName, String password) throws Exception {
