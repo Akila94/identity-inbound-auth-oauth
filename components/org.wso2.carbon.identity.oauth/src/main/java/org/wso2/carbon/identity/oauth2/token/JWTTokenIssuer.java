@@ -141,7 +141,7 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
     public String getAccessTokenHash(String accessToken) throws OAuthSystemException {
         try {
             JWT parsedJwtToken = JWTParser.parse(accessToken);
-            if (isTokenTypeWSO2(parsedJwtToken)) {
+            if (isTokenTypeWSO2JWTToken(parsedJwtToken)) {
                 String JTI = parsedJwtToken.getJWTClaimsSet().getJWTID();
                 if (JTI == null) {
                     throw new OAuthSystemException("JTI could not be retrieved from the JWT token.");
@@ -170,10 +170,10 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
      * @return
      * @throws OAuthSystemException
      */
-    private boolean isTokenTypeWSO2(JWT jwtToken) throws OAuthSystemException {
+    private boolean isTokenTypeWSO2JWTToken(JWT jwtToken) throws OAuthSystemException {
         try {
-            String issuedBy = (String) jwtToken.getJWTClaimsSet().getClaim(TOKEN_TYPE_CLAIM_KEY);
-            if (issuedBy != null && WSO2_TOKEN_TYPE_VALUE.equals(issuedBy)) {
+            String tokenType = (String) jwtToken.getJWTClaimsSet().getClaim(TOKEN_TYPE_CLAIM_KEY);
+            if (tokenType != null && WSO2_TOKEN_TYPE_VALUE.equals(tokenType)) {
                 return true;
             }
             return false;
