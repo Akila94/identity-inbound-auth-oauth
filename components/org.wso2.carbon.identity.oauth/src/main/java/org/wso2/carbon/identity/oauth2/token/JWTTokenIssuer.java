@@ -148,7 +148,7 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
                 }
                 return JTI;
             } else {
-                return null;
+                throw new OAuthSystemException("Token type is not a wso2-jwt-token");
             }
         } catch (ParseException e) {
             if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {

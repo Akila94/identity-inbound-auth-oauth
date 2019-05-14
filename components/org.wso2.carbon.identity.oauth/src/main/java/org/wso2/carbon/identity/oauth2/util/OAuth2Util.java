@@ -2646,7 +2646,13 @@ public class OAuth2Util {
         }
 
         // Loop through other issuer and try to get the hash.
-        return getAccessTokenDOFromMatchingTokenIssuer(tokenIdentifier, allOAuthTokenIssuerMap, includeExpired);
+        accessTokenDO = getAccessTokenDOFromMatchingTokenIssuer(tokenIdentifier, allOAuthTokenIssuerMap,
+                includeExpired);
+
+        if (accessTokenDO == null) {
+            throw new IllegalArgumentException("Invalid Access Token. ACTIVE access token is not found.");
+        }
+        return accessTokenDO;
     }
 
     /**
@@ -2668,11 +2674,6 @@ public class OAuth2Util {
                 try {
                     OauthTokenIssuer oauthTokenIssuer = oauthTokenIssuerEntry.getValue();
                     String tokenAlias = oauthTokenIssuer.getAccessTokenHash(tokenIdentifier);
-
-                    if (tokenAlias == null) {
-                        continue;
-                    }
-
                     if (oauthTokenIssuer.usePersistedAccessTokenAlias()) {
                         accessTokenDO =  OAuth2Util.getAccessTokenDOFromTokenIdentifier(tokenAlias, includeExpired);
                     } else {
