@@ -146,6 +146,8 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import static org.wso2.carbon.identity.oauth2.token.JWTTokenIssuer.NOT_WOS2_TOKEN_TYPE;
+
 /**
  * Utility methods for OAuth 2.0 implementation
  */
@@ -2668,6 +2670,11 @@ public class OAuth2Util {
                 try {
                     OauthTokenIssuer oauthTokenIssuer = oauthTokenIssuerEntry.getValue();
                     String tokenAlias = oauthTokenIssuer.getAccessTokenHash(tokenIdentifier);
+
+                    if (NOT_WOS2_TOKEN_TYPE.equals(tokenAlias)) {
+                        continue;
+                    }
+
                     if (oauthTokenIssuer.usePersistedAccessTokenAlias()) {
                         accessTokenDO =  OAuth2Util.getAccessTokenDOFromTokenIdentifier(tokenAlias, includeExpired);
                     } else {
@@ -2684,6 +2691,16 @@ public class OAuth2Util {
                         } else {
                             log.debug("Token issuer: " + oauthTokenIssuerEntry.getKey() + " was tried and" +
                                     " failed to parse the received token.");
+                        }
+                    }
+                } catch (IllegalArgumentException e) {
+                    if (log.isDebugEnabled()) {
+                        if (IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
+                            log.debug("Token issuer: " + oauthTokenIssuerEntry.getKey() + " was tried and"
+                                    + " failed to get the token from database: " + tokenIdentifier);
+                        } else {
+                            log.debug("Token issuer: " + oauthTokenIssuerEntry.getKey() + " was tried and"
+                                    + " failed  to get the token from database.");
                         }
                     }
                 }
