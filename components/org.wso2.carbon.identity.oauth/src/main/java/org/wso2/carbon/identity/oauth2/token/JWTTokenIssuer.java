@@ -82,8 +82,8 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
     private static final String AUTHORIZATION_PARTY = "azp";
     private static final String AUDIENCE = "aud";
     private static final String SCOPE = "scope";
-    private static final String TOKEN_TYPE = "tokenType";
-    private static final String WSO2_TOKEN = "wso2-jwt-token";
+    private static final String TOKEN_TYPE_CLAIM_KEY = "tokenType";
+    private static final String WSO2_TOKEN_TYPE_VALUE = "wso2-jwt-token";
 
     // To keep track of the expiry time provided in the original jwt assertion, when JWT grant type is used.
     private static final String EXPIRY_TIME_JWT = "EXPIRY_TIME_JWT";
@@ -172,8 +172,8 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
      */
     private boolean isTokenTypeWSO2(JWT jwtToken) throws OAuthSystemException {
         try {
-            String issuedBy = (String) jwtToken.getJWTClaimsSet().getClaim(TOKEN_TYPE);
-            if (issuedBy != null && WSO2_TOKEN.equals(issuedBy)) {
+            String issuedBy = (String) jwtToken.getJWTClaimsSet().getClaim(TOKEN_TYPE_CLAIM_KEY);
+            if (issuedBy != null && WSO2_TOKEN_TYPE_VALUE.equals(issuedBy)) {
                 return true;
             }
             return false;
@@ -438,7 +438,7 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
         jwtClaimsSetBuilder.jwtID(UUID.randomUUID().toString());
         jwtClaimsSetBuilder.notBeforeTime(new Date(curTimeInMillis));
         // Adding a claim to indicate this jwt token is issued by WSO2 issuer.
-        jwtClaimsSetBuilder.claim(TOKEN_TYPE, WSO2_TOKEN);
+        jwtClaimsSetBuilder.claim(TOKEN_TYPE_CLAIM_KEY, WSO2_TOKEN_TYPE_VALUE);
 
         String scope = getScope(authAuthzReqMessageContext, tokenReqMessageContext);
         if (StringUtils.isNotEmpty(scope)) {
