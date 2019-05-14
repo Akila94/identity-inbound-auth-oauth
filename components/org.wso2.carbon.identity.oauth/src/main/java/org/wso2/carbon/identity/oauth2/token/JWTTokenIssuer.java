@@ -83,8 +83,7 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
     private static final String AUDIENCE = "aud";
     private static final String SCOPE = "scope";
     private static final String TOKEN_TYPE = "tokenType";
-    private static final String WSO2_TOKEN = "WSO2Token";
-    public static final String NOT_WOS2_TOKEN_TYPE = "NOT_WOS2_TOKEN_TYPE";
+    private static final String WSO2_TOKEN = "wso2-jwt-token";
 
     // To keep track of the expiry time provided in the original jwt assertion, when JWT grant type is used.
     private static final String EXPIRY_TIME_JWT = "EXPIRY_TIME_JWT";
@@ -141,15 +140,15 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
     @Override
     public String getAccessTokenHash(String accessToken) throws OAuthSystemException {
         try {
-            JWT parse = JWTParser.parse(accessToken);
-            if (isTokenTypeWSO2(parse)) {
-                String JTI = parse.getJWTClaimsSet().getJWTID();
+            JWT parsedJwtToken = JWTParser.parse(accessToken);
+            if (isTokenTypeWSO2(parsedJwtToken)) {
+                String JTI = parsedJwtToken.getJWTClaimsSet().getJWTID();
                 if (JTI == null) {
                     throw new OAuthSystemException("JTI could not be retrieved from the JWT token.");
                 }
                 return JTI;
             } else {
-                return NOT_WOS2_TOKEN_TYPE;
+                return null;
             }
         } catch (ParseException e) {
             if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
@@ -438,6 +437,7 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
         jwtClaimsSetBuilder.issueTime(new Date(curTimeInMillis));
         jwtClaimsSetBuilder.jwtID(UUID.randomUUID().toString());
         jwtClaimsSetBuilder.notBeforeTime(new Date(curTimeInMillis));
+        // Adding a claim to indicate this jwt token is issued by WSO2 issuer.
         jwtClaimsSetBuilder.claim(TOKEN_TYPE, WSO2_TOKEN);
 
         String scope = getScope(authAuthzReqMessageContext, tokenReqMessageContext);

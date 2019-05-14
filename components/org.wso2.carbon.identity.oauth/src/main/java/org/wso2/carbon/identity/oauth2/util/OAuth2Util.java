@@ -146,8 +146,6 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import static org.wso2.carbon.identity.oauth2.token.JWTTokenIssuer.NOT_WOS2_TOKEN_TYPE;
-
 /**
  * Utility methods for OAuth 2.0 implementation
  */
@@ -2671,7 +2669,7 @@ public class OAuth2Util {
                     OauthTokenIssuer oauthTokenIssuer = oauthTokenIssuerEntry.getValue();
                     String tokenAlias = oauthTokenIssuer.getAccessTokenHash(tokenIdentifier);
 
-                    if (NOT_WOS2_TOKEN_TYPE.equals(tokenAlias)) {
+                    if (tokenAlias == null) {
                         continue;
                     }
 
