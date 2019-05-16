@@ -82,8 +82,6 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
     private static final String AUTHORIZATION_PARTY = "azp";
     private static final String AUDIENCE = "aud";
     private static final String SCOPE = "scope";
-    private static final String TOKEN_TYPE_CLAIM_KEY = "tokenType";
-    private static final String WSO2_TOKEN_TYPE_VALUE = "wso2-jwt-token";
 
     // To keep track of the expiry time provided in the original jwt assertion, when JWT grant type is used.
     private static final String EXPIRY_TIME_JWT = "EXPIRY_TIME_JWT";
@@ -141,15 +139,11 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
     public String getAccessTokenHash(String accessToken) throws OAuthSystemException {
         try {
             JWT parsedJwtToken = JWTParser.parse(accessToken);
-            if (isTokenTypeWSO2JWTToken(parsedJwtToken)) {
-                String JTI = parsedJwtToken.getJWTClaimsSet().getJWTID();
-                if (JTI == null) {
-                    throw new OAuthSystemException("JTI could not be retrieved from the JWT token.");
-                }
-                return JTI;
-            } else {
-                throw new OAuthSystemException("Token type is not a wso2-jwt-token");
+            String JTI = parsedJwtToken.getJWTClaimsSet().getJWTID();
+            if (JTI == null) {
+                throw new OAuthSystemException("JTI could not be retrieved from the JWT token.");
             }
+            return JTI;
         } catch (ParseException e) {
             if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
                 log.debug("Error while getting JWTID from token: " + accessToken);
@@ -161,25 +155,6 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
     @Override
     public boolean renewAccessTokenPerRequest() {
         return true;
-    }
-
-    /**
-     * Check whether token is issued by WSO2 JWT Token issuer.
-     *
-     * @param jwtToken jwt token
-     * @return
-     * @throws OAuthSystemException
-     */
-    private boolean isTokenTypeWSO2JWTToken(JWT jwtToken) throws OAuthSystemException {
-        try {
-            String tokenType = (String) jwtToken.getJWTClaimsSet().getClaim(TOKEN_TYPE_CLAIM_KEY);
-            if (tokenType != null && WSO2_TOKEN_TYPE_VALUE.equals(tokenType)) {
-                return true;
-            }
-            return false;
-        } catch (ParseException e) {
-            throw new OAuthSystemException("Error while parsing the access token hash", e);
-        }
     }
 
     /**
@@ -437,8 +412,6 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
         jwtClaimsSetBuilder.issueTime(new Date(curTimeInMillis));
         jwtClaimsSetBuilder.jwtID(UUID.randomUUID().toString());
         jwtClaimsSetBuilder.notBeforeTime(new Date(curTimeInMillis));
-        // Adding a claim to indicate this jwt token is issued by WSO2 issuer.
-        jwtClaimsSetBuilder.claim(TOKEN_TYPE_CLAIM_KEY, WSO2_TOKEN_TYPE_VALUE);
 
         String scope = getScope(authAuthzReqMessageContext, tokenReqMessageContext);
         if (StringUtils.isNotEmpty(scope)) {
