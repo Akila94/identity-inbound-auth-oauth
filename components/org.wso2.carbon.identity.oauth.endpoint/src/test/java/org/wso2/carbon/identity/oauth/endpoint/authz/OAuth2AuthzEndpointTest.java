@@ -436,7 +436,7 @@ public class OAuth2AuthzEndpointTest extends TestOAuthEndpointBase {
             if (expectedError != null) {
                 List<Object> redirectPath = responseMetadata.get(HTTPConstants.HEADER_LOCATION);
                 if (CollectionUtils.isNotEmpty(redirectPath)) {
-                    String location = (String) redirectPath.get(0);
+                    String location = String.valueOf(redirectPath.get(0));
                     assertTrue(location.contains(expectedError), "Expected error code not found in URL");
                 } else {
                     assertNotNull(response.getEntity(), "Response entity is null");
@@ -690,7 +690,7 @@ public class OAuth2AuthzEndpointTest extends TestOAuthEndpointBase {
                     CollectionUtils.isNotEmpty(responseMetadata.get(HTTPConstants.HEADER_LOCATION));
                     assertTrue(CollectionUtils.isNotEmpty(responseMetadata.get(HTTPConstants.HEADER_LOCATION)),
                             "Location header not found in the response");
-                    String location = (String) responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0);
+                    String location = String.valueOf(responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0));
                     assertTrue(location.contains(expectedError), "Expected error code not found in URL");
                 }
             }
@@ -902,7 +902,7 @@ public class OAuth2AuthzEndpointTest extends TestOAuthEndpointBase {
 
             assertTrue(CollectionUtils.isNotEmpty(responseMetadata.get(HTTPConstants.HEADER_LOCATION)),
                     "Location header not found in the response");
-            String location = (String) responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0);
+            String location = String.valueOf(responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0));
             assertTrue(location.contains(expectedLocation), "Unexpected redirect url in the response");
 
             if (checkErrorCode) {
@@ -1029,7 +1029,7 @@ public class OAuth2AuthzEndpointTest extends TestOAuthEndpointBase {
 
             assertTrue(CollectionUtils.isNotEmpty(responseMetadata.get(HTTPConstants.HEADER_LOCATION)),
                     "Location header not found in the response");
-            String location = (String) responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0);
+            String location = String.valueOf(responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0));
             assertTrue(location.contains(expectedLocation), "Unexpected redirect url in the response");
 
             if (errorCode != null) {
@@ -1143,7 +1143,8 @@ public class OAuth2AuthzEndpointTest extends TestOAuthEndpointBase {
 
             assertTrue(CollectionUtils.isNotEmpty(responseMetadata.get(HTTPConstants.HEADER_LOCATION)),
                     "Location header not found in the response");
-            String location = (String) responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0);
+            String location = String.valueOf(responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0));
+
             assertTrue(location.contains(errorCode), "Expected error code not found in URL");
         }
 
@@ -1261,7 +1262,7 @@ public class OAuth2AuthzEndpointTest extends TestOAuthEndpointBase {
         if ( response.getStatus() != HttpServletResponse.SC_OK) {
             assertTrue(CollectionUtils.isNotEmpty(responseMetadata.get(HTTPConstants.HEADER_LOCATION)),
                     "Location header not found in the response");
-            String location = (String) responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0);
+            String location = String.valueOf(responseMetadata.get(HTTPConstants.HEADER_LOCATION).get(0));
 
             assertTrue(location.contains(expectedResult), "Expected redirect URL is not returned");
         } else {
