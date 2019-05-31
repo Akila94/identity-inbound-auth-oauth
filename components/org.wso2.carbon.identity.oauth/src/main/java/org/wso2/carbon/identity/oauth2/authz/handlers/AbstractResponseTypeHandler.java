@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.oauth2.authz.handlers;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,6 +28,7 @@ import org.wso2.carbon.identity.oauth.cache.OAuthCache;
 import org.wso2.carbon.identity.oauth.callback.OAuthCallback;
 import org.wso2.carbon.identity.oauth.callback.OAuthCallbackManager;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
+import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
@@ -35,10 +37,13 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2AuthorizeReqDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2AuthorizeRespDTO;
 import org.wso2.carbon.identity.oauth2.token.OauthTokenIssuer;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
+import org.wso2.carbon.identity.oauth2.util.Oauth2ScopeUtils;
+import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * AbstractResponseTypeHandler contains all the common methods of all three basic handlers.
@@ -82,6 +87,11 @@ public abstract class AbstractResponseTypeHandler implements ResponseTypeHandler
 
     @Override
     public boolean validateScope(OAuthAuthzReqMessageContext oauthAuthzMsgCtx) throws IdentityOAuth2Exception {
+
+        if (!validateByApplicationScopeValidator(oauthAuthzMsgCtx)) {
+            return false;
+        }
+
         OAuth2AuthorizeReqDTO authorizationReqDTO = oauthAuthzMsgCtx.getAuthorizationReqDTO();
         OAuthCallback scopeValidationCallback = new OAuthCallback(authorizationReqDTO.getUser(),
                 authorizationReqDTO.getConsumerKey(), OAuthCallback.OAuthCallbackType.SCOPE_VALIDATION_AUTHZ);
@@ -154,4 +164,43 @@ public abstract class AbstractResponseTypeHandler implements ResponseTypeHandler
         return respDTO;
     }
 
+    private boolean validateByApplicationScopeValidator(OAuthAuthzReqMessageContext authzReqMessageContext)
+            throws IdentityOAuth2Exception {
+
+        String[] scopeValidators;
+        OAuthAppDO oAuthAppDO = (OAuthAppDO) authzReqMessageContext.getProperty("OAuthAppDO");
+
+        if (oAuthAppDO == null) {
+            try {
+                oAuthAppDO = OAuth2Util.getAppInformationByClientId(
+                        authzReqMessageContext.getAuthorizationReqDTO().getConsumerKey());
+            } catch (InvalidOAuthClientException e) {
+                throw new IdentityOAuth2Exception("Error while retrieving OAuth application from DB for client id: " +
+                        authzReqMessageContext.getAuthorizationReqDTO().getConsumerKey(), e);
+            }
+        }
+
+        scopeValidators = oAuthAppDO.getScopeValidators();
+
+        if (ArrayUtils.isEmpty(scopeValidators)) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("There is no scope validator registered for %s@%s",
+                        oAuthAppDO.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
+            }
+            return true;
+        }
+
+        ArrayList<String> appScopeValidators = new ArrayList<>(Arrays.asList(scopeValidators));
+        // Return false only if iterateOAuth2ScopeValidators returned false. One more validation to do if it was true.
+        if (!Oauth2ScopeUtils.iterateOAuth2ScopeValidators(authzReqMessageContext, null, appScopeValidators)) {
+            return false;
+        }
+
+        if (!appScopeValidators.isEmpty()) {
+            throw new IdentityOAuth2Exception(String.format("The scope validators %s registered for application %s@%s" +
+                            " are not found in the server configuration ", StringUtils.join(appScopeValidators, ", "),
+                    oAuthAppDO.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
+        }
+        return true;
+    }
 }

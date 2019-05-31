@@ -51,6 +51,7 @@ import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.identity.oauth2.token.OauthTokenIssuer;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
+import org.wso2.carbon.identity.oauth2.util.Oauth2ScopeUtils;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeHandler;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
 import org.wso2.carbon.user.api.UserStoreException;
@@ -270,26 +271,10 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
             return true;
         }
 
-        Set<OAuth2ScopeValidator> oAuth2ScopeValidators = OAuthServerConfiguration.getInstance()
-                .getOAuth2ScopeValidators();
         ArrayList<String> appScopeValidators = new ArrayList<>(Arrays.asList(scopeValidators));
-        for (OAuth2ScopeValidator validator : oAuth2ScopeValidators) {
-            if (validator != null && appScopeValidators.contains(validator.getValidatorName())) {
-                if (log.isDebugEnabled()) {
-                    log.debug(String.format("Validating scope of token request using %s",
-                            validator.getValidatorName()));
-                }
-                boolean isValid;
-                try {
-                    isValid = validator.validateScope(tokenReqMsgContext);
-                } catch (UserStoreException e) {
-                    throw new IdentityOAuth2Exception("Error while validating scopes from application scope validator", e);
-                }
-                appScopeValidators.remove(validator.getValidatorName());
-                if (!isValid) {
-                    return false;
-                }
-            }
+        // Return false only if iterateOAuth2ScopeValidators returned false. One more validation to do if it was true.
+        if (!Oauth2ScopeUtils.iterateOAuth2ScopeValidators(null, tokenReqMsgContext, appScopeValidators)) {
+            return false;
         }
 
         if (!appScopeValidators.isEmpty()) {
