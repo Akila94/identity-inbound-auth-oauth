@@ -278,8 +278,8 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                 for (String scope : scopes) {
                     AccessTokenDO scopedToken = null;
                     try {
-                        // retrieve latest access token for particular client, user and scope combination if its ACTIVE or EXPIRED
-
+                        // Retrieve latest access token for particular client, user and scope combination
+                        // if its ACTIVE or EXPIRED.
                         scopedToken = OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
                                 .getLatestAccessToken(clientId, authenticatedUser, userStoreDomain, scope, true);
                     } catch (IdentityOAuth2Exception e) {
@@ -291,7 +291,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                     }
                     if (scopedToken != null) {
                         try {
-                            //Revoking token from database
+                            // Revoking token from database
                             OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
                                     .revokeAccessTokens(new String[]{scopedToken.getAccessToken()});
                         } catch (IdentityOAuth2Exception e) {
@@ -305,7 +305,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
             } else {
                 if (!expiredTokens.isEmpty()) {
                     try {
-                        //Revoking token from database
+                        // Revoking token from database.
                         OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
                                 .revokeAccessTokens(expiredTokens.toArray(new String[0]));
                     } catch (IdentityOAuth2Exception e) {
