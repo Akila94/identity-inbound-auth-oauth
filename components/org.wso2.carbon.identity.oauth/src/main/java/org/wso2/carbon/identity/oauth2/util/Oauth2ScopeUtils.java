@@ -16,13 +16,15 @@
 
 package org.wso2.carbon.identity.oauth2.util;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.opensaml.xml.signature.P;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.base.IdentityException;
+import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2ScopeClientException;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2ScopeServerException;
@@ -33,12 +35,13 @@ import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
 import org.wso2.carbon.user.api.UserStoreException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Set;
 
 public class Oauth2ScopeUtils {
 
     private static final Log log = LogFactory.getLog(Oauth2ScopeUtils.class);
-    private static final String OAUTH_APP_DO_PROPERTY_NAME = "OAuthAppDO";
+    public static final String OAUTH_APP_DO_PROPERTY_NAME = "OAuthAppDO";
 
     public static IdentityOAuth2ScopeServerException generateServerException(Oauth2ScopeConstants.ErrorMessages
                                                                                 error, String data)
@@ -109,6 +112,84 @@ public class Oauth2ScopeUtils {
 
     public static int getTenantID() {
         return PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
+    }
+
+    public static boolean validateByApplicationScopeValidator(OAuthTokenReqMessageContext tokenReqMsgContext,
+                                                       OAuthAuthzReqMessageContext authzReqMessageContext)
+            throws IdentityOAuth2Exception {
+
+        String[] scopeValidators;
+        OAuthAppDO oAuthAppDO;
+
+        if (tokenReqMsgContext != null) {
+            oAuthAppDO = getOAuthAppDO(tokenReqMsgContext);
+        } else {
+            oAuthAppDO = getOAuthAppDO(authzReqMessageContext);
+        }
+
+        scopeValidators = oAuthAppDO.getScopeValidators();
+
+        if (ArrayUtils.isEmpty(scopeValidators)) {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("There is no scope validator registered for %s@%s", oAuthAppDO.getApplicationName(),
+                        OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
+            }
+            return true;
+        }
+
+        ArrayList<String> appScopeValidators = new ArrayList<>(Arrays.asList(scopeValidators));
+        // Return false only if iterateOAuth2ScopeValidators returned false. One more validation to do if it was true.
+        if (tokenReqMsgContext != null) {
+            if (!Oauth2ScopeUtils.iterateOAuth2ScopeValidators(null, tokenReqMsgContext, appScopeValidators)) {
+                return false;
+            }
+        } else {
+            if (!Oauth2ScopeUtils.iterateOAuth2ScopeValidators(authzReqMessageContext, null, appScopeValidators)) {
+                return false;
+            }
+        }
+
+        if (!appScopeValidators.isEmpty()) {
+            throw new IdentityOAuth2Exception(String.format("The scope validators %s registered for application " +
+                            "%s@%s are not found in the server configuration ", StringUtils.join(appScopeValidators,
+                    ", "), oAuthAppDO.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
+        }
+        return true;
+    }
+
+    private static OAuthAppDO getOAuthAppDO(OAuthTokenReqMessageContext tokenReqMsgContext) throws IdentityOAuth2Exception {
+
+        OAuthAppDO oAuthAppDO =
+                (OAuthAppDO) tokenReqMsgContext.getProperty(Oauth2ScopeUtils.OAUTH_APP_DO_PROPERTY_NAME);
+
+        if (oAuthAppDO == null) {
+            try {
+                oAuthAppDO = OAuth2Util.getAppInformationByClientId(
+                        tokenReqMsgContext.getOauth2AccessTokenReqDTO().getClientId());
+            } catch (InvalidOAuthClientException e) {
+                throw new IdentityOAuth2Exception("Error while retrieving OAuth application from DB for client id: " +
+                        tokenReqMsgContext.getOauth2AccessTokenReqDTO().getClientId(), e);
+            }
+        }
+        return oAuthAppDO;
+    }
+
+    private static OAuthAppDO getOAuthAppDO(OAuthAuthzReqMessageContext authzReqMessageContext)
+            throws IdentityOAuth2Exception {
+
+        OAuthAppDO oAuthAppDO =
+                (OAuthAppDO) authzReqMessageContext.getProperty(Oauth2ScopeUtils.OAUTH_APP_DO_PROPERTY_NAME);
+
+        if (oAuthAppDO == null) {
+            try {
+                oAuthAppDO = OAuth2Util.getAppInformationByClientId(
+                        authzReqMessageContext.getAuthorizationReqDTO().getConsumerKey());
+            } catch (InvalidOAuthClientException e) {
+                throw new IdentityOAuth2Exception("Error while retrieving OAuth application from DB for client id: " +
+                        authzReqMessageContext.getAuthorizationReqDTO().getConsumerKey(), e);
+            }
+        }
+        return oAuthAppDO;
     }
 
     /**

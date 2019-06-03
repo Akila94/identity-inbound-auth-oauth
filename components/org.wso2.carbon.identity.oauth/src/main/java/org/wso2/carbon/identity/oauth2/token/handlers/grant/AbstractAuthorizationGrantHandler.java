@@ -204,7 +204,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     @Override
     public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
 
-        if (!validateByApplicationScopeValidator(tokReqMsgCtx)) {
+        if (!Oauth2ScopeUtils.validateByApplicationScopeValidator(tokReqMsgCtx, null)) {
             return false;
         }
         OAuthCallback scopeValidationCallback = new OAuthCallback(tokReqMsgCtx.getAuthorizedUser(),
@@ -243,46 +243,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
             }
         }
         return isValid && scopeValidationCallback.isValidScope();
-    }
-
-    private boolean validateByApplicationScopeValidator(OAuthTokenReqMessageContext tokenReqMsgContext)
-            throws IdentityOAuth2Exception {
-
-        String[] scopeValidators;
-        OAuthAppDO oAuthAppDO = (OAuthAppDO) tokenReqMsgContext.getProperty("OAuthAppDO");
-
-        if (oAuthAppDO == null) {
-            try {
-                oAuthAppDO = OAuth2Util.getAppInformationByClientId(
-                        tokenReqMsgContext.getOauth2AccessTokenReqDTO().getClientId());
-            } catch (InvalidOAuthClientException e) {
-                throw new IdentityOAuth2Exception("Error while retrieving OAuth application from DB for client id: " +
-                        tokenReqMsgContext.getOauth2AccessTokenReqDTO().getClientId(), e);
-            }
-        }
-
-        scopeValidators = oAuthAppDO.getScopeValidators();
-
-        if (ArrayUtils.isEmpty(scopeValidators)) {
-            if (log.isDebugEnabled()) {
-                log.debug(String.format("There is no scope validator registered for %s@%s", oAuthAppDO.getApplicationName(),
-                        OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
-            }
-            return true;
-        }
-
-        ArrayList<String> appScopeValidators = new ArrayList<>(Arrays.asList(scopeValidators));
-        // Return false only if iterateOAuth2ScopeValidators returned false. One more validation to do if it was true.
-        if (!Oauth2ScopeUtils.iterateOAuth2ScopeValidators(null, tokenReqMsgContext, appScopeValidators)) {
-            return false;
-        }
-
-        if (!appScopeValidators.isEmpty()) {
-            throw new IdentityOAuth2Exception(String.format("The scope validators %s registered for application %s@%s" +
-                            " are not found in the server configuration ", StringUtils.join(appScopeValidators, ", "),
-                    oAuthAppDO.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
-        }
-        return true;
     }
 
     @Override
