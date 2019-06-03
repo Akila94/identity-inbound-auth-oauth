@@ -262,7 +262,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
             }
 
             Set<String> scopes = new HashSet<>();
-            List<String> expiredTokens =  new ArrayList<>();
+            List<String> accessTokens =  new ArrayList<>();
             for (AccessTokenDO accessTokenDO : accessTokenDOs) {
                 // Clear cache
                 OAuthUtil.clearOAuthCache(accessTokenDO.getConsumerKey(), accessTokenDO.getAuthzUser(),
@@ -271,48 +271,63 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                 OAuthUtil.clearOAuthCache(accessTokenDO.getAccessToken());
                 // Get unique scopes list
                 scopes.add(OAuth2Util.buildScopeString(accessTokenDO.getScope()));
-                expiredTokens.add(accessTokenDO.getAccessToken());
+                accessTokens.add(accessTokenDO.getAccessToken());
             }
 
             if (OAuth2Util.isHashDisabled()) {
-                for (String scope : scopes) {
-                    AccessTokenDO scopedToken = null;
-                    try {
-                        // Retrieve latest access token for particular client, user and scope combination
-                        // if its ACTIVE or EXPIRED.
-                        scopedToken = OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                                .getLatestAccessToken(clientId, authenticatedUser, userStoreDomain, scope, true);
-                    } catch (IdentityOAuth2Exception e) {
-                        String errorMsg = "Error occurred while retrieving latest " +
-                                "access token issued for Client ID : " +
-                                clientId + ", User ID : " + authenticatedUser + " and Scope : " + scope;
-                        log.error(errorMsg, e);
-                        return true;
-                    }
-                    if (scopedToken != null) {
-                        try {
-                            // Revoking token from database
-                            OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                                    .revokeAccessTokens(new String[]{scopedToken.getAccessToken()});
-                        } catch (IdentityOAuth2Exception e) {
-                            String errorMsg = "Error occurred while revoking " +
-                                    "Access Token : " + scopedToken.getAccessToken();
-                            log.error(errorMsg, e);
-                            return true;
-                        }
-                    }
-                }
+                return revokeLatestTokensWithScopes(scopes, clientId, authenticatedUser);
             } else {
-                if (!expiredTokens.isEmpty()) {
-                    try {
-                        // Revoking token from database.
-                        OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                                .revokeAccessTokens(expiredTokens.toArray(new String[0]));
-                    } catch (IdentityOAuth2Exception e) {
-                        String errorMsg = "Error occurred while revoking Access Token";
-                        log.error(errorMsg, e);
-                        return true;
-                    }
+                // If the hashed token is enabled, there can be multiple active tokens with a user with same scope.
+                // So need to revoke all the tokens.
+                return revokeTokens(accessTokens);
+            }
+        }
+        return true;
+    }
+
+    private boolean revokeTokens(List<String> accessTokens) {
+
+        if (!accessTokens.isEmpty()) {
+            try {
+                // Revoking token from database.
+                OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
+                        .revokeAccessTokens(accessTokens.toArray(new String[0]));
+            } catch (IdentityOAuth2Exception e) {
+                String errorMsg = "Error occurred while revoking Access Token";
+                log.error(errorMsg, e);
+                return true;
+            }
+        }
+        return true;
+    }
+
+    private boolean revokeLatestTokensWithScopes(Set<String> scopes, String clientId,
+                                                 AuthenticatedUser authenticatedUser) throws UserStoreException {
+
+        for (String scope : scopes) {
+            AccessTokenDO scopedToken = null;
+            try {
+                // Retrieve latest access token for particular client, user and scope combination
+                // if its ACTIVE or EXPIRED.
+                scopedToken = OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
+                        .getLatestAccessToken(clientId, authenticatedUser, authenticatedUser.getUserStoreDomain(),
+                                scope, true);
+            } catch (IdentityOAuth2Exception e) {
+                String errorMsg = "Error occurred while retrieving latest access token issued for Client ID : " +
+                        clientId + ", User ID : " + authenticatedUser + " and Scope : " + scope;
+                log.error(errorMsg, e);
+                return true;
+            }
+            if (scopedToken != null) {
+                try {
+                    // Revoking token from database
+                    OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
+                            .revokeAccessTokens(new String[]{scopedToken.getAccessToken()});
+                } catch (IdentityOAuth2Exception e) {
+                    String errorMsg = "Error occurred while revoking " + "Access Token : "
+                            + scopedToken.getAccessToken() + " for user " + authenticatedUser;
+                    log.error(errorMsg, e);
+                    return true;
                 }
             }
         }
