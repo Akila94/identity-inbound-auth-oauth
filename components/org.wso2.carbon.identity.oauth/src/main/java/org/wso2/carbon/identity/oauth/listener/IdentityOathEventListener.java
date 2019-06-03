@@ -262,6 +262,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
             }
 
             Set<String> scopes = new HashSet<>();
+            List<String> expiredTokens =  new ArrayList<>();
             for (AccessTokenDO accessTokenDO : accessTokenDOs) {
                 // Clear cache
                 OAuthUtil.clearOAuthCache(accessTokenDO.getConsumerKey(), accessTokenDO.getAuthzUser(),
@@ -270,29 +271,45 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                 OAuthUtil.clearOAuthCache(accessTokenDO.getAccessToken());
                 // Get unique scopes list
                 scopes.add(OAuth2Util.buildScopeString(accessTokenDO.getScope()));
+                expiredTokens.add(accessTokenDO.getAccessToken());
             }
 
-            for (String scope : scopes) {
-                AccessTokenDO scopedToken = null;
-                try {
-                    // retrieve latest access token for particular client, user and scope combination if its ACTIVE or EXPIRED
-                    scopedToken = OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                            .getLatestAccessToken(clientId, authenticatedUser, userStoreDomain, scope, true);
-                } catch (IdentityOAuth2Exception e) {
-                    String errorMsg = "Error occurred while retrieving latest " +
-                            "access token issued for Client ID : " +
-                            clientId + ", User ID : " + authenticatedUser + " and Scope : " + scope;
-                    log.error(errorMsg, e);
-                    return true;
+            if (OAuth2Util.isHashDisabled()) {
+                for (String scope : scopes) {
+                    AccessTokenDO scopedToken = null;
+                    try {
+                        // retrieve latest access token for particular client, user and scope combination if its ACTIVE or EXPIRED
+
+                        scopedToken = OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
+                                .getLatestAccessToken(clientId, authenticatedUser, userStoreDomain, scope, true);
+                    } catch (IdentityOAuth2Exception e) {
+                        String errorMsg = "Error occurred while retrieving latest " +
+                                "access token issued for Client ID : " +
+                                clientId + ", User ID : " + authenticatedUser + " and Scope : " + scope;
+                        log.error(errorMsg, e);
+                        return true;
+                    }
+                    if (scopedToken != null) {
+                        try {
+                            //Revoking token from database
+                            OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
+                                    .revokeAccessTokens(new String[]{scopedToken.getAccessToken()});
+                        } catch (IdentityOAuth2Exception e) {
+                            String errorMsg = "Error occurred while revoking " +
+                                    "Access Token : " + scopedToken.getAccessToken();
+                            log.error(errorMsg, e);
+                            return true;
+                        }
+                    }
                 }
-                if (scopedToken != null) {
+            } else {
+                if (!expiredTokens.isEmpty()) {
                     try {
                         //Revoking token from database
                         OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                                .revokeAccessTokens(new String[]{scopedToken.getAccessToken()});
+                                .revokeAccessTokens(expiredTokens.toArray(new String[0]));
                     } catch (IdentityOAuth2Exception e) {
-                        String errorMsg = "Error occurred while revoking " +
-                                "Access Token : " + scopedToken.getAccessToken();
+                        String errorMsg = "Error occurred while revoking Access Token";
                         log.error(errorMsg, e);
                         return true;
                     }
