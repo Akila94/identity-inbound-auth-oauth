@@ -128,7 +128,9 @@ public class Oauth2ScopeUtils {
 
         Set<OAuth2ScopeValidator> oAuth2ScopeValidators = OAuthServerConfiguration.getInstance()
                 .getOAuth2ScopeValidators();
+        // Iterate through all available scope validators.
         for (OAuth2ScopeValidator validator : oAuth2ScopeValidators) {
+            // Validate the scopes from the validator only if it's configured in the OAuth app.
             if (validator != null && appScopeValidators.contains(validator.getValidatorName())) {
                 if (log.isDebugEnabled()) {
                     log.debug(String.format("Validating scope of token request using %s",
