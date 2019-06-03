@@ -235,7 +235,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                 userStoreDomain = OAuth2Util.getUserStoreForFederatedUser(authenticatedUser);
             } catch (IdentityOAuth2Exception e) {
                 log.error("Error occurred while getting user store domain for User ID : " + authenticatedUser, e);
-                return true;
+                throw new UserStoreException(e);
             }
         }
 
@@ -246,7 +246,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                     .getTokenManagementDAO().getAllTimeAuthorizedClientIds(authenticatedUser);
         } catch (IdentityOAuth2Exception e) {
             log.error("Error occurred while retrieving apps authorized by User ID : " + authenticatedUser, e);
-            return true;
+            throw new UserStoreException(e);
         }
         for (String clientId : clientIds) {
             Set<AccessTokenDO> accessTokenDOs;
@@ -258,7 +258,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                 String errorMsg = "Error occurred while retrieving access tokens issued for " +
                         "Client ID : " + clientId + ", User ID : " + authenticatedUser;
                 log.error(errorMsg, e);
-                return true;
+                throw new UserStoreException(e);
             }
 
             Set<String> scopes = new HashSet<>();
@@ -285,7 +285,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
         return true;
     }
 
-    private boolean revokeTokens(List<String> accessTokens) {
+    private boolean revokeTokens(List<String> accessTokens) throws UserStoreException {
 
         if (!accessTokens.isEmpty()) {
             try {
@@ -295,7 +295,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
             } catch (IdentityOAuth2Exception e) {
                 String errorMsg = "Error occurred while revoking Access Token";
                 log.error(errorMsg, e);
-                return true;
+                throw new UserStoreException(e);
             }
         }
         return true;
@@ -316,7 +316,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                 String errorMsg = "Error occurred while retrieving latest access token issued for Client ID : " +
                         clientId + ", User ID : " + authenticatedUser + " and Scope : " + scope;
                 log.error(errorMsg, e);
-                return true;
+                throw new UserStoreException(e);
             }
             if (scopedToken != null) {
                 try {
@@ -327,7 +327,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                     String errorMsg = "Error occurred while revoking " + "Access Token : "
                             + scopedToken.getAccessToken() + " for user " + authenticatedUser;
                     log.error(errorMsg, e);
-                    return true;
+                    throw new UserStoreException(e);
                 }
             }
         }
