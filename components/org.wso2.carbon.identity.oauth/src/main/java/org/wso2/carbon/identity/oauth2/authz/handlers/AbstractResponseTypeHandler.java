@@ -18,7 +18,6 @@
 
 package org.wso2.carbon.identity.oauth2.authz.handlers;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,7 +27,6 @@ import org.wso2.carbon.identity.oauth.cache.OAuthCache;
 import org.wso2.carbon.identity.oauth.callback.OAuthCallback;
 import org.wso2.carbon.identity.oauth.callback.OAuthCallbackManager;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
-import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
@@ -38,12 +36,9 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2AuthorizeRespDTO;
 import org.wso2.carbon.identity.oauth2.token.OauthTokenIssuer;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.util.Oauth2ScopeUtils;
-import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 /**
  * AbstractResponseTypeHandler contains all the common methods of all three basic handlers.
@@ -88,7 +83,7 @@ public abstract class AbstractResponseTypeHandler implements ResponseTypeHandler
     @Override
     public boolean validateScope(OAuthAuthzReqMessageContext oauthAuthzMsgCtx) throws IdentityOAuth2Exception {
 
-        if (!Oauth2ScopeUtils.validateByApplicationScopeValidator(null, oauthAuthzMsgCtx)) {
+        if (hasValidateByApplicationScopeValidatorsFailed(oauthAuthzMsgCtx)) {
             return false;
         }
 
@@ -162,5 +157,14 @@ public abstract class AbstractResponseTypeHandler implements ResponseTypeHandler
         respDTO.setCallbackURI(authorizationReqDTO.getCallbackUrl());
         respDTO.setScope(oauthAuthzMsgCtx.getApprovedScope());
         return respDTO;
+    }
+
+    /**
+     * Inverting validateByApplicationScopeValidator method for better readability.
+     */
+    private boolean hasValidateByApplicationScopeValidatorsFailed(OAuthAuthzReqMessageContext authzReqMessageContext)
+            throws IdentityOAuth2Exception {
+
+        return !Oauth2ScopeUtils.validateByApplicationScopeValidator(null, authzReqMessageContext);
     }
 }

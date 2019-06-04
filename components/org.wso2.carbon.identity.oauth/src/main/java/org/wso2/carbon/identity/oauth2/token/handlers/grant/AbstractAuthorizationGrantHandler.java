@@ -19,7 +19,6 @@
 package org.wso2.carbon.identity.oauth2.token.handlers.grant;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -53,8 +52,6 @@ import org.wso2.carbon.identity.oauth2.token.OauthTokenIssuer;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.oauth2.util.Oauth2ScopeUtils;
 import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeHandler;
-import org.wso2.carbon.identity.oauth2.validators.OAuth2ScopeValidator;
-import org.wso2.carbon.user.api.UserStoreException;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -204,7 +201,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     @Override
     public boolean validateScope(OAuthTokenReqMessageContext tokReqMsgCtx) throws IdentityOAuth2Exception {
 
-        if (!Oauth2ScopeUtils.validateByApplicationScopeValidator(tokReqMsgCtx, null)) {
+        if (hasValidateByApplicationScopeValidatorsFailed(tokReqMsgCtx)) {
             return false;
         }
         OAuthCallback scopeValidationCallback = new OAuthCallback(tokReqMsgCtx.getAuthorizedUser(),
@@ -826,5 +823,14 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 
         return (OAuth2Service) PrivilegedCarbonContext
                 .getThreadLocalCarbonContext().getOSGiService(OAuth2Service.class, null);
+    }
+
+    /**
+     * Inverting validateByApplicationScopeValidator method for better readability.
+     */
+    private boolean hasValidateByApplicationScopeValidatorsFailed(OAuthTokenReqMessageContext tokenReqMsgContext)
+            throws IdentityOAuth2Exception {
+
+        return !Oauth2ScopeUtils.validateByApplicationScopeValidator(tokenReqMsgContext, null);
     }
 }

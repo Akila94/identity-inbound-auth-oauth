@@ -36,6 +36,7 @@ import org.wso2.carbon.user.api.UserStoreException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 public class Oauth2ScopeUtils {
@@ -114,14 +115,22 @@ public class Oauth2ScopeUtils {
         return PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId();
     }
 
+    /**
+     * Validate the scopes in the request using application scope validators.
+     *
+     * @param tokenReqMsgContext     If a token request, can pass an OAuthTokenReqMessageContext object.
+     * @param authzReqMessageContext If an authorization request, can pass an OAuthAuthzReqMessageContext object.
+     * @return TRUE if the validation successful, FALSE otherwise.
+     * @throws IdentityOAuth2Exception
+     */
     public static boolean validateByApplicationScopeValidator(OAuthTokenReqMessageContext tokenReqMsgContext,
-                                                       OAuthAuthzReqMessageContext authzReqMessageContext)
+                                                               OAuthAuthzReqMessageContext authzReqMessageContext)
             throws IdentityOAuth2Exception {
 
         String[] scopeValidators;
         OAuthAppDO oAuthAppDO;
 
-        if (tokenReqMsgContext != null) {
+        if (isATokenRequest(tokenReqMsgContext)) {
             oAuthAppDO = getOAuthAppDO(tokenReqMsgContext);
         } else {
             oAuthAppDO = getOAuthAppDO(authzReqMessageContext);
@@ -131,36 +140,41 @@ public class Oauth2ScopeUtils {
 
         if (ArrayUtils.isEmpty(scopeValidators)) {
             if (log.isDebugEnabled()) {
-                log.debug(String.format("There is no scope validator registered for %s@%s", oAuthAppDO.getApplicationName(),
-                        OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
+                log.debug(String.format("There is no scope validator registered for %s@%s",
+                        oAuthAppDO.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
             }
             return true;
         }
 
-        ArrayList<String> appScopeValidators = new ArrayList<>(Arrays.asList(scopeValidators));
+        List<String> appScopeValidators = new ArrayList<>(Arrays.asList(scopeValidators));
         // Return false only if iterateOAuth2ScopeValidators returned false. One more validation to do if it was true.
-        if (tokenReqMsgContext != null) {
-            if (!Oauth2ScopeUtils.iterateOAuth2ScopeValidators(null, tokenReqMsgContext, appScopeValidators)) {
+        if (isATokenRequest(tokenReqMsgContext)) {
+            if (hasScopeValidationFailed(tokenReqMsgContext, appScopeValidators, null)) {
                 return false;
             }
         } else {
-            if (!Oauth2ScopeUtils.iterateOAuth2ScopeValidators(authzReqMessageContext, null, appScopeValidators)) {
+            if (hasScopeValidationFailed(null, appScopeValidators, authzReqMessageContext)) {
                 return false;
             }
         }
 
         if (!appScopeValidators.isEmpty()) {
             throw new IdentityOAuth2Exception(String.format("The scope validators %s registered for application " +
-                            "%s@%s are not found in the server configuration ", StringUtils.join(appScopeValidators,
+                    "%s@%s are not found in the server configuration ", StringUtils.join(appScopeValidators,
                     ", "), oAuthAppDO.getApplicationName(), OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO)));
         }
         return true;
     }
 
+    private static boolean isATokenRequest(OAuthTokenReqMessageContext tokenReqMsgContext) {
+
+        return tokenReqMsgContext != null;
+    }
+
     private static OAuthAppDO getOAuthAppDO(OAuthTokenReqMessageContext tokenReqMsgContext) throws IdentityOAuth2Exception {
 
         OAuthAppDO oAuthAppDO =
-                (OAuthAppDO) tokenReqMsgContext.getProperty(Oauth2ScopeUtils.OAUTH_APP_DO_PROPERTY_NAME);
+                (OAuthAppDO) tokenReqMsgContext.getProperty(OAUTH_APP_DO_PROPERTY_NAME);
 
         if (oAuthAppDO == null) {
             try {
@@ -183,7 +197,7 @@ public class Oauth2ScopeUtils {
             throws IdentityOAuth2Exception {
 
         OAuthAppDO oAuthAppDO =
-                (OAuthAppDO) authzReqMessageContext.getProperty(Oauth2ScopeUtils.OAUTH_APP_DO_PROPERTY_NAME);
+                (OAuthAppDO) authzReqMessageContext.getProperty(OAUTH_APP_DO_PROPERTY_NAME);
 
         if (oAuthAppDO == null) {
             try {
@@ -203,6 +217,17 @@ public class Oauth2ScopeUtils {
     }
 
     /**
+     * Inverting iterateOAuth2ScopeValidators method for better readability.
+     */
+    private static boolean hasScopeValidationFailed(OAuthTokenReqMessageContext tokenReqMsgContext,
+                                                    List<String> appScopeValidators,
+                                                    OAuthAuthzReqMessageContext authzReqMessageContext)
+            throws IdentityOAuth2Exception {
+
+        return !iterateOAuth2ScopeValidators(authzReqMessageContext, tokenReqMsgContext, appScopeValidators);
+    }
+
+    /**
      * Iterate through the set of OAuth2ScopeValidators and validate the scopes in the request, considering only the
      * validators added in the OAuth App.
      *
@@ -212,9 +237,9 @@ public class Oauth2ScopeUtils {
      * @return True if scopes are valid according to all the validators sent, false otherwise.
      * @throws IdentityOAuth2Exception
      */
-    public static boolean iterateOAuth2ScopeValidators(OAuthAuthzReqMessageContext authzReqMessageContext,
-                                                       OAuthTokenReqMessageContext tokenReqMsgContext,
-                                                       ArrayList<String> appScopeValidators)
+    private static boolean iterateOAuth2ScopeValidators(OAuthAuthzReqMessageContext authzReqMessageContext,
+                                                        OAuthTokenReqMessageContext tokenReqMsgContext,
+                                                        List<String> appScopeValidators)
             throws IdentityOAuth2Exception {
 
         Set<OAuth2ScopeValidator> oAuth2ScopeValidators = OAuthServerConfiguration.getInstance()
