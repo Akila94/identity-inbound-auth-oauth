@@ -164,10 +164,15 @@ public class Oauth2ScopeUtils {
 
         if (oAuthAppDO == null) {
             try {
-                oAuthAppDO = OAuth2Util.getAppInformationByClientId(
-                        tokenReqMsgContext.getOauth2AccessTokenReqDTO().getClientId());
+                if (tokenReqMsgContext.getOauth2AccessTokenReqDTO() != null) {
+                    throw new IdentityOAuth2Exception("OAuth2 Access Token Request Object was null when obtaining" +
+                            " OAuth Application.");
+                } else {
+                    oAuthAppDO = OAuth2Util.getAppInformationByClientId(
+                            tokenReqMsgContext.getOauth2AccessTokenReqDTO().getClientId());
+                }
             } catch (InvalidOAuthClientException e) {
-                throw new IdentityOAuth2Exception("Error while retrieving OAuth application from DB for client id: " +
+                throw new IdentityOAuth2Exception("Error while retrieving OAuth application for client id: " +
                         tokenReqMsgContext.getOauth2AccessTokenReqDTO().getClientId(), e);
             }
         }
@@ -182,10 +187,15 @@ public class Oauth2ScopeUtils {
 
         if (oAuthAppDO == null) {
             try {
-                oAuthAppDO = OAuth2Util.getAppInformationByClientId(
-                        authzReqMessageContext.getAuthorizationReqDTO().getConsumerKey());
+                if (authzReqMessageContext.getAuthorizationReqDTO() != null) {
+                    throw new IdentityOAuth2Exception("Authorization Request Object was null when obtaining" +
+                            " OAuth Application.");
+                } else {
+                    oAuthAppDO = OAuth2Util.getAppInformationByClientId(
+                            authzReqMessageContext.getAuthorizationReqDTO().getConsumerKey());
+                }
             } catch (InvalidOAuthClientException e) {
-                throw new IdentityOAuth2Exception("Error while retrieving OAuth application from DB for client id: " +
+                throw new IdentityOAuth2Exception("Error while retrieving OAuth application for client id: " +
                         authzReqMessageContext.getAuthorizationReqDTO().getConsumerKey(), e);
             }
         }
