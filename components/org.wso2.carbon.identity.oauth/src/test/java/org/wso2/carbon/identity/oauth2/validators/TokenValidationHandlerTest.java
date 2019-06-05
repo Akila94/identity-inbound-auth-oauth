@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.oauth.cache.AppInfoCache;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
 import org.wso2.carbon.identity.oauth.internal.OAuthComponentServiceHolder;
+import org.wso2.carbon.identity.oauth.tokenprocessor.PlainTextPersistenceProcessor;
 import org.wso2.carbon.identity.oauth2.dao.TokenMgtDAO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
@@ -47,6 +48,7 @@ import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.token.JWTTokenIssuer;
 import org.wso2.carbon.identity.oauth2.token.OauthTokenIssuer;
 import org.wso2.carbon.identity.oauth2.token.OauthTokenIssuerImpl;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.identity.openidconnect.util.TestUtils;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.core.service.RealmService;
@@ -135,6 +137,7 @@ public class TokenValidationHandlerTest extends PowerMockTestCase {
         oAuth2AccessToken.setTokenType("bearer");
         oAuth2TokenValidationRequestDTO.setAccessToken(oAuth2AccessToken);
 
+        when(OAuth2Util.getPersistenceProcessor()).thenReturn(new PlainTextPersistenceProcessor());
         OAuth2ClientApplicationDTO response = tokenValidationHandler
                 .findOAuthConsumerIfTokenIsValid(oAuth2TokenValidationRequestDTO);
         assertNotNull(response);
@@ -171,6 +174,7 @@ public class TokenValidationHandlerTest extends PowerMockTestCase {
         tokenMgtDAO.persistAccessToken(ACCESS_TOKEN, "testConsumerKey", accessTokenDO, accessTokenDO,
                 "TESTDOMAIN");
         oAuth2TokenValidationRequestDTO.setAccessToken(accessToken);
+        when(OAuth2Util.getPersistenceProcessor()).thenReturn(new PlainTextPersistenceProcessor());
 
         assertNotNull(tokenValidationHandler.buildIntrospectionResponse(oAuth2TokenValidationRequestDTO));
     }
