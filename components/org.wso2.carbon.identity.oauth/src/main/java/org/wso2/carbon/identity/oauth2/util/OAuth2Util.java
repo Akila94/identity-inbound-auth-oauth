@@ -445,7 +445,7 @@ public class OAuth2Util {
         return true;
     }
 
-    private static TokenPersistenceProcessor getPersistenceProcessor() throws IdentityOAuth2Exception {
+    public static TokenPersistenceProcessor getPersistenceProcessor() throws IdentityOAuth2Exception {
 
         TokenPersistenceProcessor persistenceProcessor;
         try {
@@ -1336,8 +1336,11 @@ public class OAuth2Util {
         boolean cacheHit = false;
         AccessTokenDO accessTokenDO = null;
 
+        // As the server implementation knows about the PersistenceProcessor Processed Access Token,
+        // we are converting before adding to the cache.
+        String processedToken = getPersistenceProcessor().getProcessedAccessTokenIdentifier(accessTokenIdentifier);
         // check the cache, if caching is enabled.
-        OAuthCacheKey cacheKey = new OAuthCacheKey(accessTokenIdentifier);
+        OAuthCacheKey cacheKey = new OAuthCacheKey(processedToken);
         CacheEntry result = OAuthCache.getInstance().getValueFromCache(cacheKey);
         // cache hit, do the type check.
         if (result != null && result instanceof AccessTokenDO) {
@@ -1358,7 +1361,7 @@ public class OAuth2Util {
 
         // add the token back to the cache in the case of a cache miss
         if (!cacheHit) {
-            cacheKey = new OAuthCacheKey(accessTokenIdentifier);
+            cacheKey = new OAuthCacheKey(processedToken);
             OAuthCache.getInstance().addToCache(cacheKey, accessTokenDO);
             if (log.isDebugEnabled()) {
                 log.debug("Access Token Info object was added back to the cache.");
