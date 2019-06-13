@@ -298,6 +298,10 @@ public class SAML2BearerGrantHandler extends AbstractAuthorizationGrantHandler {
      */
     private String getUpdatedRoleClaimValue(IdentityProvider identityProvider, String currentRoleClaimValue) {
 
+        if (StringUtils.equalsIgnoreCase(IdentityApplicationConstants.RESIDENT_IDP_RESERVED_NAME, identityProvider
+                .getIdentityProviderName())) {
+            return currentRoleClaimValue;
+        }
         PermissionsAndRoleConfig permissionAndRoleConfig = identityProvider.getPermissionAndRoleConfig();
         if (permissionAndRoleConfig != null && ArrayUtils.isNotEmpty(permissionAndRoleConfig.getRoleMappings())) {
 
