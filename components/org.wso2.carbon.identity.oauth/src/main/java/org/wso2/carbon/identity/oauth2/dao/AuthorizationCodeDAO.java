@@ -51,6 +51,9 @@ public interface AuthorizationCodeDAO {
     Set<String> getAuthorizationCodesByUser(AuthenticatedUser authenticatedUser) throws
             IdentityOAuth2Exception;
 
+    List<AuthzCodeDO> getAuthorizationCodesDataByUser(AuthenticatedUser authenticatedUser) throws
+            IdentityOAuth2Exception;
+
     Set<String> getAuthorizationCodesByConsumerKey(String consumerKey) throws IdentityOAuth2Exception;
 
     Set<String> getActiveAuthorizationCodesByConsumerKey(String consumerKey) throws IdentityOAuth2Exception;

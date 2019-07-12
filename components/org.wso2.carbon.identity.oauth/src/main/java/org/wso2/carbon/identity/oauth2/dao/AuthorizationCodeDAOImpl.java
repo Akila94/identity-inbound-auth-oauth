@@ -43,6 +43,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
@@ -384,7 +385,7 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
         }
     }
 
-    @Override
+    @Deprecated
     public Set<String> getAuthorizationCodesByUser(AuthenticatedUser authenticatedUser) throws
             IdentityOAuth2Exception {
 
@@ -435,6 +436,105 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
             IdentityDatabaseUtil.closeAllConnections(connection, null, ps);
         }
         return authorizationCodes;
+    }
+
+    /**
+     * Returns the set of Authorization codes issued for the user.
+     * <p>
+     * The returned set of Authorization codes is consumed by
+     * {@link org.wso2.carbon.identity.oauth.listener.IdentityOathEventListener} to clear user claims cached against the
+     * authz codes during a user attribute update.
+     * <p>
+     * Unless authz codes are issued for openid scope there is no point in returning since no claims are usually
+     * cached against authz codes otherwise.
+     * <p>
+     * Tokens with openid scope should not be expired eventhough in ACTIVE state, in order to clear from the cache.
+     *
+     * @param authenticatedUser
+     * @return
+     * @throws IdentityOAuth2Exception
+     */
+    @Override
+    public List<AuthzCodeDO> getAuthorizationCodesDataByUser(AuthenticatedUser authenticatedUser) throws
+            IdentityOAuth2Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving authorization codes of user: " + authenticatedUser.toString());
+        }
+
+        Connection connection = IdentityDatabaseUtil.getDBConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<AuthzCodeDO> authorizationCodes = new ArrayList<>();
+        String authzUser = authenticatedUser.getUserName();
+        String tenantDomain = authenticatedUser.getTenantDomain();
+        String userStoreDomain = authenticatedUser.getUserStoreDomain();
+        boolean isUsernameCaseSensitive = IdentityUtil.isUserStoreInUsernameCaseSensitive(authenticatedUser.toString());
+        try {
+            String sqlQuery = SQLQueries.GET_AUTHORIZATION_CODE_DATA_BY_AUTHZUSER;
+            if (!isUsernameCaseSensitive) {
+                sqlQuery = sqlQuery.replace(AUTHZ_USER, LOWER_AUTHZ_USER);
+            }
+            ps = connection.prepareStatement(sqlQuery);
+            if (isUsernameCaseSensitive) {
+                ps.setString(1, authzUser);
+            } else {
+                ps.setString(1, authzUser.toLowerCase());
+            }
+            ps.setInt(2, OAuth2Util.getTenantId(tenantDomain));
+            ps.setString(3, userStoreDomain);
+            ps.setString(4, OAuthConstants.TokenStates.TOKEN_STATE_ACTIVE);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                long validityPeriodInMillis = rs.getLong(3);
+                Timestamp timeCreated = rs.getTimestamp(2, Calendar.getInstance(TimeZone.getTimeZone(UTC)));
+                long issuedTimeInMillis = timeCreated.getTime();
+                String authorizationCode = rs.getString(1);
+                String authzCodeId = rs.getString(4);
+                String[] scope = OAuth2Util.buildScopeArray(rs.getString(5));
+                String callbackUrl = rs.getString(6);
+                String consumerKey = rs.getString(7);
+
+                AuthenticatedUser user = OAuth2Util.createAuthenticatedUser(authzUser, userStoreDomain, tenantDomain);
+                user.setUserName(authzUser);
+                user.setUserStoreDomain(userStoreDomain);
+                user.setTenantDomain(tenantDomain);
+
+                //Authorization codes returned by this method will be used to clear claims cached against them.
+                // We will only return authz codes that would contain such cached clams in order to improve performance.
+                // Authorization codes issued for openid scope can contain cached claims against them.
+                if (isTokenIssuedForOpenidScope(scope)) {
+                    // Authorization codes that are in ACTIVE state and not expired should be removed from the cache.
+                    if (OAuth2Util.getTimeToExpire(issuedTimeInMillis, validityPeriodInMillis) > 0) {
+                        if (isHashDisabled) {
+                            authorizationCodes.add(new AuthzCodeDO(user, scope, timeCreated, validityPeriodInMillis, callbackUrl,
+                                    consumerKey, authorizationCode, authzCodeId));
+                        }
+                    }
+                }
+            }
+            connection.commit();
+        } catch (SQLException e) {
+            IdentityDatabaseUtil.rollBack(connection);
+            throw new IdentityOAuth2Exception("Error occurred while revoking Access Token with user Name : " +
+                    authenticatedUser.getUserName() + " tenant ID : " + OAuth2Util.getTenantId(authenticatedUser
+                    .getTenantDomain()), e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, null, ps);
+        }
+        return authorizationCodes;
+    }
+
+    /**
+     * Checks whether the issued token is for openid scope.
+     *
+     * @param scopes
+     * @return
+     */
+    private boolean isTokenIssuedForOpenidScope(String[] scopes) {
+
+        return Arrays.asList(scopes).contains("openid");
     }
 
     @Override

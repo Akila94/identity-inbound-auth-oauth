@@ -161,7 +161,6 @@ public class AuthorizationGrantCache extends BaseCache<AuthorizationGrantCacheKe
         return cacheEntry;
     }
 
-
     /**
      * Clears a cache entry by authorization code.
      *
@@ -170,6 +169,18 @@ public class AuthorizationGrantCache extends BaseCache<AuthorizationGrantCacheKe
     public void clearCacheEntryByCode(AuthorizationGrantCacheKey key) {
         super.clearCacheEntry(key);
         clearFromSessionStore(replaceFromCodeId(key.getUserAttributesId()));
+    }
+
+    /**
+     * Clears a cache entry by authorization code Id.
+     *
+     * @param key         Key to clear cache
+     * @param authzCodeId AuthorizationCodeId
+     */
+    public void clearCacheEntryByCodeId(AuthorizationGrantCacheKey key, String authzCodeId) {
+
+        super.clearCacheEntry(key);
+        clearFromSessionStore(authzCodeId);
     }
 
     /**
