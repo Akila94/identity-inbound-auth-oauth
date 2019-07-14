@@ -21,6 +21,7 @@
 package org.wso2.carbon.identity.oauth2.dao;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
@@ -385,6 +386,9 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
         }
     }
 
+    /**
+     * @deprecated use {@link AuthorizationCodeDAOImpl#getAuthorizationCodesByUserForOpenidScope(AuthenticatedUser)} instead.
+     */
     @Deprecated
     public Set<String> getAuthorizationCodesByUser(AuthenticatedUser authenticatedUser) throws
             IdentityOAuth2Exception {
@@ -451,11 +455,11 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
      * Tokens with openid scope should not be expired eventhough in ACTIVE state, in order to clear from the cache.
      *
      * @param authenticatedUser
-     * @return
+     * @return authorizationCodes
      * @throws IdentityOAuth2Exception
      */
     @Override
-    public List<AuthzCodeDO> getAuthorizationCodesDataByUser(AuthenticatedUser authenticatedUser) throws
+    public List<AuthzCodeDO> getAuthorizationCodesByUserForOpenidScope(AuthenticatedUser authenticatedUser) throws
             IdentityOAuth2Exception {
 
         if (log.isDebugEnabled()) {
@@ -504,7 +508,7 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
                 //Authorization codes returned by this method will be used to clear claims cached against them.
                 // We will only return authz codes that would contain such cached clams in order to improve performance.
                 // Authorization codes issued for openid scope can contain cached claims against them.
-                if (isTokenIssuedForOpenidScope(scope)) {
+                if (isAuthorizationCodeIssuedForOpenidScope(scope)) {
                     // Authorization codes that are in ACTIVE state and not expired should be removed from the cache.
                     if (OAuth2Util.getTimeToExpire(issuedTimeInMillis, validityPeriodInMillis) > 0) {
                         if (isHashDisabled) {
@@ -517,7 +521,7 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
             connection.commit();
         } catch (SQLException e) {
             IdentityDatabaseUtil.rollBack(connection);
-            throw new IdentityOAuth2Exception("Error occurred while revoking Access Token with user Name : " +
+            throw new IdentityOAuth2Exception("Error occurred while revoking authorization code with username : " +
                     authenticatedUser.getUserName() + " tenant ID : " + OAuth2Util.getTenantId(authenticatedUser
                     .getTenantDomain()), e);
         } finally {
@@ -530,11 +534,14 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
      * Checks whether the issued token is for openid scope.
      *
      * @param scopes
-     * @return
+     * @return true if authorization code issued for openid scope. False if not.
      */
-    private boolean isTokenIssuedForOpenidScope(String[] scopes) {
+    private boolean isAuthorizationCodeIssuedForOpenidScope(String[] scopes) {
 
-        return Arrays.asList(scopes).contains("openid");
+        if(ArrayUtils.isNotEmpty(scopes)) {
+            return Arrays.asList(scopes).contains("openid");
+        }
+        return false;
     }
 
     @Override

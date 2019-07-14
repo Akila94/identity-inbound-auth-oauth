@@ -340,7 +340,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
         String userStoreDomain = UserCoreUtil.getDomainName(userStoreManager.getRealmConfiguration());
         String tenantDomain = IdentityTenantUtil.getTenantDomain(userStoreManager.getTenantId());
         Set<AccessTokenDO> accessTokenDOSet;
-        List<AuthzCodeDO> authorizationCodeInfoSet;
+        List<AuthzCodeDO> authorizationCodeDOSet;
         AuthenticatedUser authenticatedUser = new AuthenticatedUser();
         authenticatedUser.setUserStoreDomain(userStoreDomain);
         authenticatedUser.setTenantDomain(tenantDomain);
@@ -348,22 +348,22 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
         try {
             accessTokenDOSet = OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
                     .getAccessTokensByUserForOpenidScope(authenticatedUser);
-            authorizationCodeInfoSet = OAuthTokenPersistenceFactory.getInstance()
-                    .getAuthorizationCodeDAO().getAuthorizationCodesDataByUser(authenticatedUser);
+            authorizationCodeDOSet = OAuthTokenPersistenceFactory.getInstance()
+                    .getAuthorizationCodeDAO().getAuthorizationCodesByUserForOpenidScope(authenticatedUser);
             removeAccessTokensFromCache(accessTokenDOSet);
-            removeAuthzCodesFromCache(authorizationCodeInfoSet);
+            removeAuthzCodesFromCache(authorizationCodeDOSet);
         } catch (IdentityOAuth2Exception e) {
             String errorMsg = "Error occurred while retrieving access tokens issued for user : " + userName;
             log.error(errorMsg, e);
         }
     }
 
-    private void removeAuthzCodesFromCache(List<AuthzCodeDO> authorizationCodeInfoSet) {
+    private void removeAuthzCodesFromCache(List<AuthzCodeDO> authorizationCodeDOSet) {
 
-        if (CollectionUtils.isNotEmpty(authorizationCodeInfoSet)) {
-            for (AuthzCodeDO authorizationCodeInfo : authorizationCodeInfoSet) {
-                String authorizationCode = authorizationCodeInfo.getAuthorizationCode();
-                String authzCodeId = authorizationCodeInfo.getAuthzCodeId();
+        if (CollectionUtils.isNotEmpty(authorizationCodeDOSet)) {
+            for (AuthzCodeDO authorizationCodeDO : authorizationCodeDOSet) {
+                String authorizationCode = authorizationCodeDO.getAuthorizationCode();
+                String authzCodeId = authorizationCodeDO.getAuthzCodeId();
                 AuthorizationGrantCacheKey cacheKey = new AuthorizationGrantCacheKey(authorizationCode);
                 AuthorizationGrantCache.getInstance().clearCacheEntryByCodeId(cacheKey, authzCodeId);
             }
