@@ -1042,6 +1042,8 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
      * @param authenticatedUser
      * @return
      * @throws IdentityOAuth2Exception
+     *
+     * @deprecated use {@link AccessTokenDAOImpl#getAccessTokensByUserForOpenidScope(AuthenticatedUser)} instead.
      */
     @Deprecated
     public Set<String> getAccessTokensByUser(AuthenticatedUser authenticatedUser) throws IdentityOAuth2Exception {
@@ -1115,7 +1117,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
      * Tokens with openid scope should not be expired eventhough in ACTIVE state, in order to clear from the cache.
      *
      * @param authenticatedUser
-     * @return
+     * @return accessTokens
      * @throws IdentityOAuth2Exception
      */
     @Override
@@ -1147,34 +1149,47 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
             ps.setInt(2, OAuth2Util.getTenantId(authenticatedUser.getTenantDomain()));
             ps.setString(3, OAuthConstants.TokenStates.TOKEN_STATE_ACTIVE);
             ps.setString(4, authenticatedUser.getUserStoreDomain());
-            ps.setString(5,OAuthConstants.Scope.OPENID);
+            ps.setString(5, OAuthConstants.Scope.OPENID);
             rs = ps.executeQuery();
             while (rs.next()) {
                 String accessToken = getPersistenceProcessor().getPreprocessedAccessTokenIdentifier(rs.getString(1));
-                String tokenId = rs.getString(2);
-                Timestamp timeCreated = rs.getTimestamp(3, Calendar.getInstance(TimeZone.getTimeZone(UTC)));
+                String refreshToken = getPersistenceProcessor().getPreprocessedRefreshToken(rs.getString(2));
+                String tokenId = rs.getString(3);
+                Timestamp timeCreated = rs.getTimestamp(4, Calendar.getInstance(TimeZone.getTimeZone(UTC)));
                 long issuedTimeInMillis = timeCreated.getTime();
-                long validityPeriodInMillis = rs.getLong(4);
+                long validityPeriodInMillis = rs.getLong(5);
+                Timestamp refreshTokenTimeCreated = rs.getTimestamp(6, Calendar.getInstance(TimeZone.getTimeZone(UTC)));
+                long refreshTokenValidityPeriodInMillis = rs.getLong(7);
+                String consumerKey = rs.getString(8);
+                String grantType = rs.getString(9);
 
-                AccessTokenDO tokenInfo = new AccessTokenDO();
-                tokenInfo.setAccessToken(accessToken);
-                tokenInfo.setTokenId(tokenId);
-                tokenInfo.setIssuedTime(timeCreated);
-                tokenInfo.setValidityPeriodInMillis(validityPeriodInMillis);
+                AccessTokenDO accessTokenDO = new AccessTokenDO();
+                accessTokenDO.setAuthzUser(authenticatedUser);
+                accessTokenDO.setTenantID(OAuth2Util.getTenantId(authenticatedUser.getTenantDomain()));
+                accessTokenDO.setAccessToken(accessToken);
+                accessTokenDO.setRefreshToken(refreshToken);
+                accessTokenDO.setTokenId(tokenId);
+                accessTokenDO.setTokenState(OAuthConstants.TokenStates.TOKEN_STATE_ACTIVE);
+                accessTokenDO.setIssuedTime(timeCreated);
+                accessTokenDO.setValidityPeriodInMillis(validityPeriodInMillis);
+                accessTokenDO.setRefreshTokenIssuedTime(refreshTokenTimeCreated);
+                accessTokenDO.setRefreshTokenValidityPeriodInMillis(refreshTokenValidityPeriodInMillis);
+                accessTokenDO.setConsumerKey(consumerKey);
+                accessTokenDO.setTokenType(grantType);
 
-                // Tokens returned by this method will be used to clear claims cached against the tokens,
+                // Tokens returned by this method will be used to clear claims cached against the tokens.
                 // We will only return tokens that would contain such cached clams in order to improve performance.
                 // Tokens issued for openid scope can contain cached claims against them.
                 // Tokens that are in ACTIVE state and not expired should be removed from the cache.
                 if(!isAccessTokenExpired(issuedTimeInMillis, validityPeriodInMillis)) {
-                    tokenMap.put(accessToken, tokenInfo);
+                    tokenMap.put(accessToken, accessTokenDO);
                 }
             }
             connection.commit();
             accessTokens = new HashSet<>(tokenMap.values());
         } catch (SQLException e) {
             IdentityDatabaseUtil.rollBack(connection);
-            throw new IdentityOAuth2Exception("Error occurred while revoking Access Token with user Name : " +
+            throw new IdentityOAuth2Exception("Error occurred while revoking access token with username : " +
                     authenticatedUser.getUserName() + " tenant ID : " + OAuth2Util.getTenantId(authenticatedUser
                     .getTenantDomain()), e);
         } finally {
@@ -1210,14 +1225,11 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
      *
      * @param issuedTimeInMillis
      * @param validityPeriodMillis
-     * @return
+     * @return true if access token is expired. False if not.
      */
     private boolean isAccessTokenExpired(long issuedTimeInMillis, long validityPeriodMillis) {
 
-        if(OAuth2Util.getTimeToExpire(issuedTimeInMillis, validityPeriodMillis) < 0) {
-            return true;
-        }
-        return false;
+        return OAuth2Util.getTimeToExpire(issuedTimeInMillis, validityPeriodMillis) < 0;
     }
 
     /**
