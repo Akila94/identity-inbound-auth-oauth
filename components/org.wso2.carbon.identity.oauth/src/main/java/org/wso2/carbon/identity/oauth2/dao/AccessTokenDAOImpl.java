@@ -1175,7 +1175,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                 accessTokenDO.setRefreshTokenIssuedTime(refreshTokenTimeCreated);
                 accessTokenDO.setRefreshTokenValidityPeriodInMillis(refreshTokenValidityPeriodInMillis);
                 accessTokenDO.setConsumerKey(consumerKey);
-                accessTokenDO.setTokenType(grantType);
+                accessTokenDO.setGrantType(grantType);
 
                 // Tokens returned by this method will be used to clear claims cached against the tokens.
                 // We will only return tokens that would contain such cached clams in order to improve performance.
