@@ -73,6 +73,12 @@ public interface AccessTokenDAO {
 
     void revokeAccessTokensIndividually(String[] tokens) throws IdentityOAuth2Exception;
 
+    void revokeAccessTokens(String[] tokens, boolean isInternalCall) throws IdentityOAuth2Exception;
+
+    void revokeAccessTokensInBatch(String[] tokens, boolean isHashedToken) throws IdentityOAuth2Exception;
+
+    void revokeAccessTokensIndividually(String[] tokens, boolean isHashedToken) throws IdentityOAuth2Exception;
+
     void revokeAccessToken(String tokenId, String userId) throws IdentityOAuth2Exception;
 
     void invalidateAndCreateNewAccessToken(String oldAccessTokenId, String tokenState, String consumerKey,

@@ -28,7 +28,6 @@ import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.OAuthUtil;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
-import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheEntry;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheKey;
 import org.wso2.carbon.identity.oauth.util.ClaimCache;
 import org.wso2.carbon.identity.oauth.util.ClaimCacheKey;
@@ -292,7 +291,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
             try {
                 // Revoking token from database.
                 OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                        .revokeAccessTokens(accessTokens.toArray(new String[0]));
+                        .revokeAccessTokens(accessTokens.toArray(new String[0]), true);
             } catch (IdentityOAuth2Exception e) {
                 String errorMsg = "Error occurred while revoking Access Token";
                 log.error(errorMsg, e);
@@ -323,7 +322,7 @@ public class IdentityOathEventListener extends AbstractIdentityUserOperationEven
                 try {
                     // Revoking token from database
                     OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                            .revokeAccessTokens(new String[]{scopedToken.getAccessToken()});
+                            .revokeAccessTokens(new String[] { scopedToken.getAccessToken() }, true);
                 } catch (IdentityOAuth2Exception e) {
                     String errorMsg = "Error occurred while revoking " + "Access Token : "
                             + scopedToken.getAccessToken() + " for user " + authenticatedUser;

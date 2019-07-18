@@ -75,7 +75,6 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
     private static final String OAUTH_TOKEN_PERSISTENCE_RETRY_COUNT = "OAuth.TokenPersistence.RetryCount";
     private static final int DEFAULT_TOKEN_PERSIST_RETRY_COUNT = 5;
     private static final String IDN_OAUTH2_ACCESS_TOKEN = "IDN_OAUTH2_ACCESS_TOKEN";
-    private boolean isHashDisabled = OAuth2Util.isHashDisabled();
     private boolean isTokenCleanupFeatureEnabled=OAuthServerConfiguration.getInstance().isTokenCleanupEnabled();
 
     private Log log = LogFactory.getLog(AccessTokenDAOImpl.class);
@@ -821,7 +820,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
     }
 
     /**
-     * This method is to revoke specific tokens
+     * This method is to revoke specific tokens. Tokens which are reached here should be a plain text token.
      *
      * @param tokens tokens that needs to be revoked
      * @throws IdentityOAuth2Exception if failed to revoke the access token
@@ -836,8 +835,57 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
         }
     }
 
+    /**
+     * This method is to revoke specific tokens from internal calls such as from any listeners ex:
+     * IdentityOathEventListener etc. We need to differentiate this types of internal calls hence these calls
+     * retrieved the tokens from the DB and then try to revoke it.
+     * When the Token Hashing Feature enabled, the token which is retrieve from the DB will be a hashed token. Hence
+     * we don't need to hash it again.
+     *
+     * @param tokens         Tokens that needs to be revoked.
+     * @param isInternalCall whether this method call from internal listeners ex: IdentityOathEventListener.
+     * @throws IdentityOAuth2Exception if failed to revoke the access token
+     */
+    @Override
+    public void revokeAccessTokens(String[] tokens, boolean isInternalCall) throws IdentityOAuth2Exception {
+
+        boolean isTokenHashingFeatureDisabled = OAuth2Util.isHashDisabled();
+
+        if (isTokenHashingFeatureDisabled) {
+            // Will be a plain token, hence pass it to default revokeAccessTokens method.
+            revokeAccessTokens(tokens);
+        } else {
+            // Token is hashed, no need to hash it again.
+            if (OAuth2Util.checkAccessTokenPartitioningEnabled() && OAuth2Util.checkUserNameAssertionEnabled()) {
+                revokeAccessTokensIndividually(tokens, true);
+            } else {
+                revokeAccessTokensInBatch(tokens, true);
+            }
+        }
+    }
+
+    /**
+     * Revoke the access token(s) as a batch. Token(s) which is reached here will be a plain text tokens.
+     *
+     * @param tokens        Token that needs to be revoked.
+     * @throws IdentityOAuth2Exception
+     */
     @Override
     public void revokeAccessTokensInBatch(String[] tokens) throws IdentityOAuth2Exception {
+
+        revokeAccessTokensInBatch(tokens, false);
+
+    }
+
+    /**
+     * Revoke the access token(s) as a batch.
+     *
+     * @param tokens        Token that needs to be revoked.
+     * @param isHashedToken Given token is hashed token or plain text.
+     * @throws IdentityOAuth2Exception
+     */
+    @Override
+    public void revokeAccessTokensInBatch(String[] tokens, boolean isHashedToken) throws IdentityOAuth2Exception {
 
         if (log.isDebugEnabled()) {
             if (IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
@@ -863,10 +911,10 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                 for (String token : tokens) {
                     ps.setString(1, OAuthConstants.TokenStates.TOKEN_STATE_REVOKED);
                     ps.setString(2, UUID.randomUUID().toString());
-                    if (isHashDisabled) {
-                        ps.setString(3, getHashingPersistenceProcessor().getProcessedAccessTokenIdentifier(token));
-                    } else {
+                    if (isHashedToken) {
                         ps.setString(3, token);
+                    } else {
+                        ps.setString(3, getHashingPersistenceProcessor().getProcessedAccessTokenIdentifier(token));
                     }
                     ps.addBatch();
                     oldTokens.add(getHashingPersistenceProcessor().getProcessedAccessTokenIdentifier(token));
@@ -896,10 +944,10 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                 ps = connection.prepareStatement(sqlQuery);
                 ps.setString(1, OAuthConstants.TokenStates.TOKEN_STATE_REVOKED);
                 ps.setString(2, UUID.randomUUID().toString());
-                if (isHashDisabled) {
-                    ps.setString(3, getHashingPersistenceProcessor().getProcessedAccessTokenIdentifier(tokens[0]));
-                } else {
+                if (isHashedToken) {
                     ps.setString(3, tokens[0]);
+                } else {
+                    ps.setString(3, getHashingPersistenceProcessor().getProcessedAccessTokenIdentifier(tokens[0]));
                 }
                 ps.executeUpdate();
 
@@ -920,8 +968,27 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
         }
     }
 
+    /**
+     * Revoke the access token(s) individually. Token(s) which is reached here will be a plain text tokens.
+     *
+     * @param tokens        Token that needs to be revoked.
+     * @throws IdentityOAuth2Exception
+     */
     @Override
     public void revokeAccessTokensIndividually(String[] tokens) throws IdentityOAuth2Exception {
+
+        revokeAccessTokensIndividually(tokens, false);
+    }
+
+    /**
+     * Revoke the access token(s) individually.
+     *
+     * @param tokens        Token that needs to be revoked.
+     * @param isHashedToken Given token is hashed token or plain text.
+     * @throws IdentityOAuth2Exception
+     */
+    @Override
+    public void revokeAccessTokensIndividually(String[] tokens, boolean isHashedToken) throws IdentityOAuth2Exception {
 
         List<String> accessTokenId = new ArrayList<>();
         if (log.isDebugEnabled()) {
@@ -946,10 +1013,10 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                 ps = connection.prepareStatement(sqlQuery);
                 ps.setString(1, OAuthConstants.TokenStates.TOKEN_STATE_REVOKED);
                 ps.setString(2, UUID.randomUUID().toString());
-                if (isHashDisabled) {
-                    ps.setString(3, getHashingPersistenceProcessor().getProcessedAccessTokenIdentifier(token));
-                } else {
+                if (isHashedToken) {
                     ps.setString(3, token);
+                } else {
+                    ps.setString(3, getHashingPersistenceProcessor().getProcessedAccessTokenIdentifier(token));
                 }
                 int count = ps.executeUpdate();
                 if (log.isDebugEnabled()) {
