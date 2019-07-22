@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.application.common.util.IdentityApplicationConst
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManager;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
@@ -53,6 +54,7 @@ public class OAuth2JWTTokenValidator extends DefaultOAuth2TokenValidator {
     private static final String ALGO_PREFIX = "RS";
     private static final Log log = LogFactory.getLog(OAuth2JWTTokenValidator.class);
     private static final String OIDC_IDP_ENTITY_ID = "IdPEntityId";
+    private static final String TRUE = "true";
 
     @Override
     public boolean validateAccessToken(OAuth2TokenValidationMessageContext validationReqDTO)
@@ -72,6 +74,7 @@ public class OAuth2JWTTokenValidator extends DefaultOAuth2TokenValidator {
             }
             checkExpirationTime(claimsSet.getExpirationTime());
             checkNotBeforeTime(claimsSet.getNotBeforeTime());
+            setJWTMessageContext(validationReqDTO, claimsSet);
         } catch (JOSEException | ParseException e) {
             throw new IdentityOAuth2Exception("Error while validating Token.", e);
         }
@@ -241,5 +244,14 @@ public class OAuth2JWTTokenValidator extends DefaultOAuth2TokenValidator {
             tenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
         }
         return tenantDomain;
+    }
+
+    private void setJWTMessageContext(OAuth2TokenValidationMessageContext validationReqDTO, JWTClaimsSet claimsSet) {
+
+        validationReqDTO.addProperty(OAuth2Util.JWT_ACCESS_TOKEN, TRUE);
+        validationReqDTO.addProperty(OAuth2Util.SUB, claimsSet.getSubject());
+        validationReqDTO.addProperty(OAuth2Util.ISS, claimsSet.getIssuer());
+        validationReqDTO.addProperty(OAuth2Util.AUD, claimsSet.getAudience().get(0));
+        validationReqDTO.addProperty(OAuth2Util.JTI, claimsSet.getJWTID());
     }
 }
