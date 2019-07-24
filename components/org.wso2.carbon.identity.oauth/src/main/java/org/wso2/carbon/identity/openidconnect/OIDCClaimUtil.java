@@ -114,7 +114,7 @@ public class OIDCClaimUtil {
         } else {
             if (log.isDebugEnabled()) {
                 String msg = "Filtering user claims based on consent skipped for grant type:%s. Returning original " +
-                        "user claims for user:%s, for clientId:%s of tenantDomain:%s";
+                        "user claims for user: %s, for clientId: %s of tenantDomain: %s";
                 log.debug(String.format(msg, grantType, authenticatedUser.toFullQualifiedUsername(),
                         clientId, spTenantDomain));
             }
