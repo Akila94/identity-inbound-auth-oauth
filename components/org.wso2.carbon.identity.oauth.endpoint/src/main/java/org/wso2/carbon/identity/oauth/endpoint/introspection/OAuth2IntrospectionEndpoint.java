@@ -25,6 +25,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2IntrospectionResponseDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
+import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -40,7 +41,8 @@ import javax.ws.rs.core.Response;
 public class OAuth2IntrospectionEndpoint {
 
     private final static Log log = LogFactory.getLog(OAuth2IntrospectionEndpoint.class);
-    private final static String DEFAULT_TOKEN_TYPE_HINT = "bearer";
+    private final static String TOKEN_TYPE_HINT = "bearer";
+    private final static String JWT_TOKEN_TYPE_HINT = "jwt";
     private final static String DEFAULT_TOKEN_TYPE = "Bearer";
     private final static String JWT_TOKEN_TYPE = "JWT";
 
@@ -60,7 +62,11 @@ public class OAuth2IntrospectionEndpoint {
         OAuth2IntrospectionResponseDTO introspectionResponse;
 
         if (tokenTypeHint == null) {
-            tokenTypeHint = DEFAULT_TOKEN_TYPE_HINT;
+            if (OAuth2Util.isJWT(token)) {
+                tokenTypeHint = JWT_TOKEN_TYPE_HINT;
+            } else {
+                tokenTypeHint = TOKEN_TYPE_HINT;
+            }
         }
 
         if (log.isDebugEnabled()) {
@@ -106,14 +112,17 @@ public class OAuth2IntrospectionEndpoint {
                 .setTokenType(DEFAULT_TOKEN_TYPE)
                 .setClientId(introspectionResponse.getClientId())
                 .setIssuedAt(introspectionResponse.getIat())
-                .setExpiration(introspectionResponse.getExp());
+                .setExpiration(introspectionResponse.getExp())
+                .setAudience(introspectionResponse.getAud())
+                .setIssuer(introspectionResponse.getIss());
 
-        if (tokenTypeHint.equalsIgnoreCase(JWT_TOKEN_TYPE)) {
+
+        if (OAuth2Util.isJWT(token)) {
             respBuilder.setAudience(introspectionResponse.getAud())
                     .setJwtId(introspectionResponse.getJti())
                     .setSubject(introspectionResponse.getSub())
-                    .setTokenType(JWT_TOKEN_TYPE)
-                    .setIssuer(introspectionResponse.getIss());
+                    .setIssuer(introspectionResponse.getIss())
+                    .setTokenType(JWT_TOKEN_TYPE);
         }
 
         //provide jwt in the response only if claims are requested
