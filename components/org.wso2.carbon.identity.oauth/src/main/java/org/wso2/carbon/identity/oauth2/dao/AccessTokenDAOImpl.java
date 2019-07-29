@@ -820,7 +820,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
     }
 
     /**
-     * This method is to revoke specific tokens. Tokens which are reached here should be a plain text token.
+     * This method is to revoke specific tokens where tokens should be plain text tokens.
      *
      * @param tokens tokens that needs to be revoked
      * @throws IdentityOAuth2Exception if failed to revoke the access token
@@ -836,31 +836,30 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
     }
 
     /**
-     * This method is to revoke specific tokens from internal calls such as from any listeners ex:
-     * IdentityOathEventListener etc. We need to differentiate this types of internal calls hence these calls
-     * retrieved the tokens from the DB and then try to revoke it.
+     * This method is to revoke specific tokens where tokens can be plain text tokens or hashed tokens. Hashed tokens
+     * can be reached here from internal calls such as from any listeners ex: IdentityOathEventListener etc. We need
+     * to differentiate this types of internal calls hence these calls retrieved the tokens from the DB and then try
+     * to revoke it.
      * When the Token Hashing Feature enabled, the token which is retrieve from the DB will be a hashed token. Hence
      * we don't need to hash it again.
      *
-     * @param tokens         Tokens that needs to be revoked.
-     * @param isInternalCall whether this method call from internal listeners ex: IdentityOathEventListener.
+     * @param tokens        Tokens that needs to be revoked.
+     * @param isHashedToken Indicate provided token is a hashed token or plain text token.
      * @throws IdentityOAuth2Exception if failed to revoke the access token
      */
     @Override
-    public void revokeAccessTokens(String[] tokens, boolean isInternalCall) throws IdentityOAuth2Exception {
+    public void revokeAccessTokens(String[] tokens, boolean isHashedToken) throws IdentityOAuth2Exception {
 
-        boolean isTokenHashingFeatureDisabled = OAuth2Util.isHashDisabled();
-
-        if (isTokenHashingFeatureDisabled) {
-            // Will be a plain token, hence pass it to default revokeAccessTokens method.
-            revokeAccessTokens(tokens);
-        } else {
+        if (isHashedToken) {
             // Token is hashed, no need to hash it again.
             if (OAuth2Util.checkAccessTokenPartitioningEnabled() && OAuth2Util.checkUserNameAssertionEnabled()) {
                 revokeAccessTokensIndividually(tokens, true);
             } else {
                 revokeAccessTokensInBatch(tokens, true);
             }
+        } else {
+            // Token is plain token, hence pass it to default revokeAccessTokens method.
+            revokeAccessTokens(tokens);
         }
     }
 
@@ -874,7 +873,6 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
     public void revokeAccessTokensInBatch(String[] tokens) throws IdentityOAuth2Exception {
 
         revokeAccessTokensInBatch(tokens, false);
-
     }
 
     /**

@@ -86,7 +86,8 @@ public class OAuthUserStoreConfigListenerImpl extends AbstractUserStoreConfigLis
                 tokensToRevoke.add(((AccessTokenDO) entry.getValue()).getAccessToken());
             }
             OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
-                    .revokeAccessTokens(tokensToRevoke.toArray(new String[tokensToRevoke.size()]), true);
+                    .revokeAccessTokens(tokensToRevoke.toArray(new String[tokensToRevoke.size()]),
+                            !OAuth2Util.isHashDisabled());
             List<AuthzCodeDO> latestAuthzCodes = OAuthTokenPersistenceFactory.getInstance()
                     .getAuthorizationCodeDAO().getLatestAuthorizationCodesByUserStore(tenantId, userStoreName);
             for (AuthzCodeDO authzCodeDO : latestAuthzCodes) {
