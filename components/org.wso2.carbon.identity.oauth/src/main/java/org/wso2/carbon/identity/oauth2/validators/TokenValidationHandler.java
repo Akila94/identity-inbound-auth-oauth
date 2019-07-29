@@ -285,6 +285,10 @@ public class TokenValidationHandler {
             introResp.setUsername(getAuthzUser(accessTokenDO));
             // add client id
             introResp.setClientId(accessTokenDO.getConsumerKey());
+            // add issuer
+            introResp.setIss(OAuth2Util.OAuthURL.getOAuth2TokenEPUrl());
+            // add audience
+            introResp.setAud(accessTokenDO.getConsumerKey());
             // adding the AccessTokenDO as a context property for further use
             messageContext.addProperty("AccessTokenDO", accessTokenDO);
         }
@@ -314,10 +318,6 @@ public class TokenValidationHandler {
             }
             if (messageContext.getProperty(OAuth2Util.JTI) != null) {
                 introResp.setJti((String) messageContext.getProperty(OAuth2Util.JTI));
-            }
-            // set the token not to be used before time in seconds
-            if (messageContext.getProperty(OAuth2Util.NBF) != null) {
-                introResp.setNbf(Long.parseLong((String) messageContext.getProperty(OAuth2Util.NBF)));
             }
         }
 

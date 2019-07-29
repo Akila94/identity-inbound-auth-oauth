@@ -8,6 +8,7 @@
 .idea
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
+**/.DS_Store
 
 # Package Files #
 *.jar
@@ -19,3 +20,4 @@ hs_err_pid*
 
 # Ignore everything in this directory
 target
+
