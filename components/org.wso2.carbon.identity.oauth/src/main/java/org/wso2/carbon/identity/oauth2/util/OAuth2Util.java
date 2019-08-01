@@ -1338,11 +1338,8 @@ public class OAuth2Util {
         boolean cacheHit = false;
         AccessTokenDO accessTokenDO = null;
 
-        // As the server implementation knows about the PersistenceProcessor Processed Access Token,
-        // we are converting before adding to the cache.
-        String processedToken = getPersistenceProcessor().getProcessedAccessTokenIdentifier(accessTokenIdentifier);
         // check the cache, if caching is enabled.
-        OAuthCacheKey cacheKey = new OAuthCacheKey(processedToken);
+        OAuthCacheKey cacheKey = new OAuthCacheKey(accessTokenIdentifier);
         CacheEntry result = OAuthCache.getInstance().getValueFromCache(cacheKey);
         // cache hit, do the type check.
         if (result != null && result instanceof AccessTokenDO) {
@@ -1361,9 +1358,9 @@ public class OAuth2Util {
             throw new IllegalArgumentException("Invalid Access Token. Access token is not ACTIVE.");
         }
 
-        // add the token back to the cache in the case of a cache miss
-        if (!cacheHit) {
-            cacheKey = new OAuthCacheKey(processedToken);
+        // Add the token back to the cache in the case of a cache miss but don't add to cache when OAuth2 token
+        // hashing feature enabled inorder to reduce the complexity.
+        if (!cacheHit & OAuth2Util.isHashDisabled()) {
             OAuthCache.getInstance().addToCache(cacheKey, accessTokenDO);
             if (log.isDebugEnabled()) {
                 log.debug("Access Token Info object was added back to the cache.");
