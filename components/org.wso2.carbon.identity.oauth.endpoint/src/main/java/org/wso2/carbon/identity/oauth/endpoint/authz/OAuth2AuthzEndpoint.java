@@ -759,6 +759,11 @@ public class OAuth2AuthzEndpoint {
     private boolean isFormPostResponseMode(OAuthMessage oAuthMessage, String redirectURL) {
 
         OAuth2Parameters oauth2Params = getOauth2Params(oAuthMessage);
+        return isFormPostResponseMode(oauth2Params, redirectURL);
+    }
+
+    private boolean isFormPostResponseMode(OAuth2Parameters oauth2Params, String redirectURL) {
+
         return RESPONSE_MODE_FORM_POST.equals(oauth2Params.getResponseMode()) && isJSON(redirectURL);
     }
 
@@ -2304,7 +2309,7 @@ public class OAuth2AuthzEndpoint {
                 }
                 opBrowserStateCookie = OIDCSessionManagementUtil.addOPBrowserStateCookie(response);
                 // Adding sid claim in the IDtoken to OIDCSessionState class.
-                storeSidClaim(redirectURL, sessionStateObj);
+                storeSidClaim(redirectURL, sessionStateObj, oAuth2Parameters);
                 sessionStateObj.setAuthenticatedUser(authenticatedUser);
                 sessionStateObj.addSessionParticipant(oAuth2Parameters.getClientId());
                 OIDCSessionManagementUtil.getSessionManager()
@@ -2326,7 +2331,7 @@ public class OAuth2AuthzEndpoint {
                         OIDCSessionManagementUtil.getSessionManager().restoreOIDCSessionState
                                 (oldOPBrowserStateCookieId, newOPBrowserStateCookieId, previousSessionState);
 
-                        storeSidClaim(redirectURL, previousSessionState);
+                        storeSidClaim(redirectURL, previousSessionState, oAuth2Parameters);
                     }
                 } else {
                     log.warn("No session state found for the received Session ID : " + opBrowserStateCookie.getValue());
@@ -2477,14 +2482,19 @@ public class OAuth2AuthzEndpoint {
      * @param redirectURL
      * @param sessionState
      */
-    private void storeSidClaim(String redirectURL, OIDCSessionState sessionState) {
+    private void storeSidClaim(String redirectURL, OIDCSessionState sessionState, OAuth2Parameters oAuth2Parameters) {
 
         String idToken;
         String code;
         if (redirectURL.contains(ID_TOKEN)) {
 
             try {
-                idToken = getIdTokenFromRedirectURL(redirectURL);
+                if (isFormPostResponseMode(oAuth2Parameters, redirectURL)) {
+                    JSONObject jsonData = new JSONObject(redirectURL);
+                    idToken = (String) jsonData.get(ID_TOKEN);
+                } else {
+                    idToken = getIdTokenFromRedirectURL(redirectURL);
+                }
                 if (!idToken.isEmpty()) {
                     addSidToSessionStateFromIdToken(idToken, sessionState);
                 }
