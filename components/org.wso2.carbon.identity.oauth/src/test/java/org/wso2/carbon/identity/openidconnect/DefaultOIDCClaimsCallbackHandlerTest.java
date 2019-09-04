@@ -511,7 +511,6 @@ public class DefaultOIDCClaimsCallbackHandlerTest {
     @Test
     public void testHandleCustomClaimsWithOAuthTokenReqMsgCtxtWithRoleDomainRemoved() throws Exception {
 
-
         JWTClaimsSet.Builder jwtClaimsSetBuilder = new JWTClaimsSet.Builder();
         OAuthTokenReqMessageContext requestMsgCtx = getTokenReqMessageContextForLocalUser();
 
