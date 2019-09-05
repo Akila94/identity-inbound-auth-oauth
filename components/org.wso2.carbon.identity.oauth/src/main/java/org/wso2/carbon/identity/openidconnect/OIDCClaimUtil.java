@@ -112,10 +112,10 @@ public class OIDCClaimUtil {
                     domainRemovedRoles = removeDomainFromNamesExcludeHybrid(listOfRolesToRemoveDomainName);
                 }
                 if (domainRemovedRoles != null && !domainRemovedRoles.isEmpty()) {
-                        spMappedRoles.addAll(domainRemovedRoles);
+                    spMappedRoles.addAll(domainRemovedRoles);
                 }
             }
-                return StringUtils.join(spMappedRoles, claimSeparator);
+            return StringUtils.join(spMappedRoles, claimSeparator);
         }
         return null;
     }
