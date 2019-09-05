@@ -74,7 +74,7 @@ public class OIDCClaimUtil {
             RoleMapping[] localToSpRoleMapping = serviceProvider.getPermissionAndRoleConfig().getRoleMappings();
 
             // List which will hold list of local roles that user store domain name to be removed.
-            List<String> listOfRolesToRemoveDomainName = new ArrayList<>();
+            List<String> listOfRolesToRemoveDomainName = null;
             // List which will hold list of service provider roles which are mapped to local roles internally
             List<String> spMappedRoles = new ArrayList<>();
             // Configuration in identity.xml which forces to return only sp mapped roles.
@@ -107,12 +107,15 @@ public class OIDCClaimUtil {
                 }
             }
             if (isRemoveUserDomainInRole) {
-                List<String> domainRemovedRoles = removeDomainFromNamesExcludeHybrid(listOfRolesToRemoveDomainName);
-                if (!domainRemovedRoles.isEmpty()) {
-                    spMappedRoles.addAll(domainRemovedRoles);
+                List<String> domainRemovedRoles = null;
+                if (listOfRolesToRemoveDomainName != null) {
+                    domainRemovedRoles = removeDomainFromNamesExcludeHybrid(listOfRolesToRemoveDomainName);
+                }
+                if (domainRemovedRoles != null && !domainRemovedRoles.isEmpty()) {
+                        spMappedRoles.addAll(domainRemovedRoles);
                 }
             }
-            return StringUtils.join(spMappedRoles, claimSeparator);
+                return StringUtils.join(spMappedRoles, claimSeparator);
         }
         return null;
     }
@@ -128,13 +131,13 @@ public class OIDCClaimUtil {
     /**
      * Remove domain name from roles except the hybrid roles (Internal,Application & Workflow)
      *
-     * @param names list of roles assigned to a user
+     * @param listOfRolesToRemoveDomainName list of roles assigned to a user
      * @return list of roles assigned to a user with domain name removed from roles
      */
-    private static List<String> removeDomainFromNamesExcludeHybrid(List<String> names) {
+    private static List<String> removeDomainFromNamesExcludeHybrid(List<String> listOfRolesToRemoveDomainName) {
 
-        List<String> nameList = new ArrayList<String>();
-        for (String name : names) {
+        List<String> nameList = new ArrayList<>();
+        for (String name : listOfRolesToRemoveDomainName) {
             String userStoreDomain = IdentityUtil.extractDomainFromName(name);
             if (UserCoreConstants.INTERNAL_DOMAIN.equalsIgnoreCase(userStoreDomain) || APPLICATION_DOMAIN
                     .equalsIgnoreCase(userStoreDomain) || WORKFLOW_DOMAIN.equalsIgnoreCase(userStoreDomain)) {
