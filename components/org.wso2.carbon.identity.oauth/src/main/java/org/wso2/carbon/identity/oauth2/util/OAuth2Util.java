@@ -2965,22 +2965,23 @@ public class OAuth2Util {
 
         Map<String, Object> params = new HashMap<>();
         params.put("error", introspectionResponse.getError());
-        OAuthEventInterceptor oAuthEventInterceptorProxy = null;
+
         try {
-            oAuthEventInterceptorProxy = OAuthComponentServiceHolder.getInstance()
+            OAuthEventInterceptor oAuthEventInterceptorProxy = OAuthComponentServiceHolder.getInstance()
                     .getOAuthEventInterceptorProxy();
+
+            if (oAuthEventInterceptorProxy != null) {
+                try {
+                    oAuthEventInterceptorProxy.onTokenValidationException(introspectionRequest, params);
+                } catch (IdentityOAuth2Exception e) {
+                    log.error("Error while invoking OAuthEventInterceptor for onTokenValidationException", e);
+                }
+            }
         } catch (Throwable e) {
             // Catching a throwable as we do no need to interrupt the code flow since these are logging purposes.
             if (log.isDebugEnabled()) {
-                log.debug("Error occurred while executing oAuthEventInterceptorProxy for onTokenValidationException.",
-                        e);
-            }
-        }
-        if (oAuthEventInterceptorProxy != null) {
-            try {
-                oAuthEventInterceptorProxy.onTokenValidationException(introspectionRequest, params);
-            } catch (IdentityOAuth2Exception e) {
-                log.error("Error while invoking OAuthEventInterceptor for onTokenValidationException", e);
+                log.debug("Error occurred while executing oAuthEventInterceptorProxy for onTokenValidationException."
+                        , e);
             }
         }
     }
