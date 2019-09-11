@@ -37,6 +37,7 @@ import org.wso2.carbon.identity.application.authentication.framework.util.Framew
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
@@ -73,6 +74,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.RequestParams.TENANT_DOMAIN;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils.getRedirectURL;
+import static org.wso2.carbon.identity.oidc.session.OIDCSessionConstants.OIDC_LOGOUT_DENIAL_NEW_REDIRECT;
 
 public class OIDCLogoutServlet extends HttpServlet {
 
@@ -162,6 +164,15 @@ public class OIDCLogoutServlet extends HttpServlet {
                 // User denied logout.
                 redirectURL = OIDCSessionManagementUtil
                         .getErrorPageURL(OAuth2ErrorCodes.ACCESS_DENIED, "End User denied the logout request");
+                //set postLogoutRedirectUri as redirectURL
+                boolean postLogoutRedirectUriRedirectIsEnabled =
+                        Boolean.parseBoolean(IdentityUtil.getProperty(OIDC_LOGOUT_DENIAL_NEW_REDIRECT));
+                if (postLogoutRedirectUriRedirectIsEnabled) {
+                    OIDCSessionDataCacheEntry cacheEntry = getSessionDataFromCache(opBrowserStateCookie.getValue());
+                    if (cacheEntry != null && cacheEntry.getPostLogoutRedirectUri() != null) {
+                        redirectURL = cacheEntry.getPostLogoutRedirectUri();
+                    }
+                }
             }
         } else {
             // OIDC Logout response
