@@ -74,7 +74,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.RequestParams.TENANT_DOMAIN;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils.getRedirectURL;
-import static org.wso2.carbon.identity.oidc.session.OIDCSessionConstants.OIDC_LOGOUT_DENIAL_NEW_REDIRECT;
+import static org.wso2.carbon.identity.oidc.session.OIDCSessionConstants.OIDC_LOGOUT_CONSENT_DENIAL_REDIRECT_URL;
 
 public class OIDCLogoutServlet extends HttpServlet {
 
@@ -164,9 +164,9 @@ public class OIDCLogoutServlet extends HttpServlet {
                 // User denied logout.
                 redirectURL = OIDCSessionManagementUtil
                         .getErrorPageURL(OAuth2ErrorCodes.ACCESS_DENIED, "End User denied the logout request");
-                //set postLogoutRedirectUri as redirectURL
+                // Set postLogoutRedirectUri as redirectURL.
                 boolean postLogoutRedirectUriRedirectIsEnabled =
-                        Boolean.parseBoolean(IdentityUtil.getProperty(OIDC_LOGOUT_DENIAL_NEW_REDIRECT));
+                        Boolean.parseBoolean(IdentityUtil.getProperty(OIDC_LOGOUT_CONSENT_DENIAL_REDIRECT_URL));
                 if (postLogoutRedirectUriRedirectIsEnabled) {
                     OIDCSessionDataCacheEntry cacheEntry = getSessionDataFromCache(opBrowserStateCookie.getValue());
                     if (cacheEntry != null && cacheEntry.getPostLogoutRedirectUri() != null) {
