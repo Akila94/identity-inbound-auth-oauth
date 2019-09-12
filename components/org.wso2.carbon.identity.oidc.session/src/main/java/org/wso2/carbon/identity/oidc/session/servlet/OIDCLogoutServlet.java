@@ -34,6 +34,7 @@ import org.wso2.carbon.identity.application.authentication.framework.model.Authe
 import org.wso2.carbon.identity.application.authentication.framework.model.CommonAuthRequestWrapper;
 import org.wso2.carbon.identity.application.authentication.framework.model.CommonAuthResponseWrapper;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
@@ -170,9 +171,11 @@ public class OIDCLogoutServlet extends HttpServlet {
                 if (postLogoutRedirectUriRedirectIsEnabled) {
                     OIDCSessionDataCacheEntry cacheEntry = getSessionDataFromCache(opBrowserStateCookie.getValue());
                     if (cacheEntry != null && cacheEntry.getPostLogoutRedirectUri() != null) {
-                        redirectURL = OIDCSessionManagementUtil.generateRedirectURLWithErrorMsg(
-                                cacheEntry.getPostLogoutRedirectUri(), OAuth2ErrorCodes.ACCESS_DENIED,
-                                "End User denied the logout request");
+                        Map<String, String> params = new HashMap<>();
+                        params.put(OAuthConstants.OAUTH_ERROR, OAuth2ErrorCodes.ACCESS_DENIED);
+                        params.put(OAuthConstants.OAUTH_ERROR_DESCRIPTION, "End User denied the logout request");
+                        redirectURL = FrameworkUtils.buildURLWithQueryParams(
+                                cacheEntry.getPostLogoutRedirectUri(), params);
                     }
                 }
             }
