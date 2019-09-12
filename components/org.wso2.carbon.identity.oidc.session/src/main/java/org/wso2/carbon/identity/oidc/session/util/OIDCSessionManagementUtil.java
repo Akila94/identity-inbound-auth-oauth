@@ -267,6 +267,28 @@ public class OIDCSessionManagementUtil {
         return errorPageUrl;
     }
 
+    /**
+     * Append error and error_description to redirect page as query parameters
+     *
+     * @param redirectURL
+     * @param errorCode
+     * @param errorMessage
+     * @return
+     */
+    public static String generateRedirectURLWithErrorMsg(String redirectURL, String errorCode, String errorMessage) {
+
+        String errorPageUrl = redirectURL;
+        try {
+            errorPageUrl += "?" + OAuthConstants.OAUTH_ERROR + "=" + URLEncoder.encode(errorCode, "UTF-8") + "&"
+                    + OAuthConstants.OAUTH_ERROR_DESCRIPTION + "=" + URLEncoder.encode(errorMessage, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Error while encoding the error page url", e);
+            }
+        }
+        return errorPageUrl;
+
+    }
 
     /**
      * Returns the OpenIDConnect User Consent.

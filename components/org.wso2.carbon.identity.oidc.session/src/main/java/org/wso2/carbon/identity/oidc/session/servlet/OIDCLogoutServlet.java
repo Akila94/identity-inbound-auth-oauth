@@ -170,7 +170,9 @@ public class OIDCLogoutServlet extends HttpServlet {
                 if (postLogoutRedirectUriRedirectIsEnabled) {
                     OIDCSessionDataCacheEntry cacheEntry = getSessionDataFromCache(opBrowserStateCookie.getValue());
                     if (cacheEntry != null && cacheEntry.getPostLogoutRedirectUri() != null) {
-                        redirectURL = cacheEntry.getPostLogoutRedirectUri();
+                        redirectURL = OIDCSessionManagementUtil.generateRedirectURLWithErrorMsg(
+                                cacheEntry.getPostLogoutRedirectUri(), OAuth2ErrorCodes.ACCESS_DENIED,
+                                "End User denied the logout request");
                     }
                 }
             }
