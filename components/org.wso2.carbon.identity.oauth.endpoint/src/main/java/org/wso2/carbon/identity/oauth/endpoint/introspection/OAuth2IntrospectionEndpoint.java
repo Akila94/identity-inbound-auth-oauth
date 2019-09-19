@@ -22,11 +22,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.IntrospectionDataProvider;
 import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2IntrospectionResponseDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
@@ -137,12 +142,47 @@ public class OAuth2IntrospectionEndpoint {
             respBuilder.setTokenString(introspectionResponse.getUserContext());
         }
 
+        // Check data providers are enabled for token introspection.
+        if (OAuthServerConfiguration.getInstance().isEnableIntrospectionDataProviders()) {
+            List<Object> introspectionDataProviders = new ArrayList<>();
+            try {
+                // Retrieve list of registered IntrospectionDataProviders.
+                introspectionDataProviders = PrivilegedCarbonContext
+                        .getThreadLocalCarbonContext().getOSGiServices(IntrospectionDataProvider.class, null);
+            } catch (Exception e) {
+
+                // Carbon context throws a null pointer exception when the requested osgi services cannot be found.
+                log.warn("Introspection data providers have been enabled but no data providers were found.");
+            }
+
+            for (Object dataProvider : introspectionDataProviders) {
+                if (dataProvider instanceof IntrospectionDataProvider) {
+
+                    if (log.isDebugEnabled()) {
+                        log.debug("Executing introspection data provider: " + dataProvider.getClass().getName());
+                    }
+                    try {
+                        respBuilder.setAdditionalData(
+                                (((IntrospectionDataProvider) dataProvider).getIntrospectionData(
+                                        introspectionRequest, introspectionResponse)));
+                    } catch (IdentityOAuth2Exception e) {
+                        log.error("Error occurred while processing additional token introspection data.", e);
+
+                        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity("{\"error\": \"Error occurred while building the introspection " +
+                                        "response.\"}")
+                                .build();
+                    }
+                }
+            }
+        }
+
         try {
             return Response.ok(respBuilder.build(), MediaType.APPLICATION_JSON).status(Response.Status.OK).build();
         } catch (JSONException e) {
-            log.error("Error occured while building the json response.", e);
+            log.error("Error occurred while building the json response.", e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{'error': 'Error occured while building the json response.'}").build();
+                    .entity("{\"error\": \"Error occurred while building the json response.\"}").build();
         }
     }
 }
