@@ -152,7 +152,7 @@ public class OAuth2IntrospectionEndpoint {
             } catch (Exception e) {
 
                 // Carbon context throws a null pointer exception when the requested osgi services cannot be found.
-                log.warn("Introspection data providers have been enabled but not data providers were found");
+                log.warn("Introspection data providers have been enabled but no data providers were found.");
             }
 
             for (Object dataProvider : introspectionDataProviders) {
