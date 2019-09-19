@@ -30,6 +30,7 @@ import org.wso2.carbon.identity.oauth2.dto.OAuth2IntrospectionResponseDTO;
 import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -143,10 +144,16 @@ public class OAuth2IntrospectionEndpoint {
 
         // Check data providers are enabled for token introspection.
         if (OAuthServerConfiguration.getInstance().isEnableIntrospectionDataProviders()) {
+            List<Object> introspectionDataProviders = new ArrayList<>();
+            try {
+                // Retrieve list of registered IntrospectionDataProviders.
+                introspectionDataProviders = PrivilegedCarbonContext
+                        .getThreadLocalCarbonContext().getOSGiServices(IntrospectionDataProvider.class, null);
+            } catch (Exception e) {
 
-            // Retrieve list of registered IntrospectionDataProviders.
-            List<Object> introspectionDataProviders = PrivilegedCarbonContext
-                    .getThreadLocalCarbonContext().getOSGiServices(IntrospectionDataProvider.class, null);
+                // Carbon context throws a null pointer exception when the requested osgi services cannot be found.
+                log.warn("Introspection data providers have been enabled but not data providers were found");
+            }
 
             for (Object dataProvider : introspectionDataProviders) {
                 if (dataProvider instanceof IntrospectionDataProvider) {
