@@ -35,6 +35,7 @@ public class OIDCSessionConstants {
             ".RedirectToPostLogoutUriOnConsentDenial";
 
     public static final String OIDC_CACHE_CLIENT_ID_PARAM = "client_id";
+    public static final String OIDC_CACHE_TENANT_DOMAIN_PARAM = "tenant_domain";
 
     public static final String OIDC_ID_TOKEN_AZP_CLAIM = "azp";
 
