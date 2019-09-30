@@ -134,7 +134,7 @@ public class OAuth2IntrospectionEndpoint {
                     .setJwtId(introspectionResponse.getJti())
                     .setSubject(introspectionResponse.getSub())
                     .setIssuer(introspectionResponse.getIss())
-                    .setTokenType(JWT_TOKEN_TYPE);
+                    .setTokenType(DEFAULT_TOKEN_TYPE);
         }
 
         //provide jwt in the response only if claims are requested
