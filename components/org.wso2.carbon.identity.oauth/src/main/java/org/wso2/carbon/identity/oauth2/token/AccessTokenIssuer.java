@@ -124,8 +124,13 @@ public class AccessTokenIssuer {
         OAuthTokenReqMessageContext tokReqMsgCtx = new OAuthTokenReqMessageContext(tokenReqDTO);
         boolean isRefreshRequest = GrantType.REFRESH_TOKEN.toString().equals(grantType);
 
+        long startTime = System.currentTimeMillis();
         triggerPreListeners(tokenReqDTO, tokReqMsgCtx, isRefreshRequest);
-
+        long endTime = System.currentTimeMillis();
+        long timeElapsed = endTime - startTime;
+        if (log.isDebugEnabled()) {
+            log.debug("[TCCSUB-52]-Time taken to execute the pre listeners: " + timeElapsed);
+        }
         OAuthClientAuthnContext oAuthClientAuthnContext = tokenReqDTO.getoAuthClientAuthnContext();
 
         if (oAuthClientAuthnContext == null) {
