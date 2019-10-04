@@ -609,6 +609,50 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
         return authorizationCodes;
     }
 
+    /**
+     * This method will retrieve the authorization code and code id from the IDN_OAUTH2_AUTHORIZATION_CODE table and
+     * return as a dataobject.
+     * @param consumerKey client id
+     * @return authorization code data object
+     * @throws IdentityOAuth2Exception
+     */
+    public Set<AuthzCodeDO> getAuthorizationCodeDOSetByConsumerKey(String consumerKey) throws IdentityOAuth2Exception {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving active authorization code data objects for client: " + consumerKey);
+        }
+        Connection connection = IdentityDatabaseUtil.getDBConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        Set<AuthzCodeDO> authzCodeDOs = new HashSet<>();
+        String sqlQuery = SQLQueries.GET_DETAILED_ACTIVE_AUTHORIZATION_CODES_FOR_CONSUMER_KEY;
+        try {
+            ps = connection.prepareStatement(sqlQuery);
+            ps.setString(1, consumerKey);
+            ps.setString(2, OAuthConstants.AuthorizationCodeState.ACTIVE);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                if (isHashDisabled) {
+                    AuthzCodeDO authzCodeDO = new AuthzCodeDO();
+                    String authzCode = getPersistenceProcessor().getPreprocessedAuthzCode(rs.getString(1));
+                    String codeId = rs.getString(2);
+                    authzCodeDO.setAuthorizationCode(authzCode);
+                    authzCodeDO.setAuthzCodeId(codeId);
+                    authzCodeDOs.add(authzCodeDO);
+                }
+            }
+            connection.commit();
+        } catch (SQLException e) {
+            IdentityDatabaseUtil.rollBack(connection);
+            throw new IdentityOAuth2Exception(
+                    "Error occurred while getting authorization codes and code ids from " + "authorization code "
+                            + "table for the application with consumer key : " + consumerKey, e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, rs, ps);
+        }
+        return authzCodeDOs;
+    }
+
     @Override
     public List<AuthzCodeDO> getLatestAuthorizationCodesByTenant(int tenantId) throws IdentityOAuth2Exception {
 
