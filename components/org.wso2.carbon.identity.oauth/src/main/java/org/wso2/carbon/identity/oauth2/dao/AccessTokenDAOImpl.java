@@ -1490,25 +1490,35 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
         PreparedStatement ps = null;
         ResultSet rs = null;
         Set<AccessTokenDO> accessTokens = new HashSet<>();
+        Map<String, AccessTokenDO> tokenMap = new HashMap<>();
         try {
             String sqlQuery = OAuth2Util.getTokenPartitionedSqlByUserStore(SQLQueries.
                     GET_ACCESS_TOKENS_AND_TOKEN_IDS_FOR_CONSUMER_KEY, userStoreDomain);
             ps = connection.prepareStatement(sqlQuery);
             ps.setString(1, consumerKey);
             ps.setString(2, OAuthConstants.TokenStates.TOKEN_STATE_ACTIVE);
+            ps.setString(3, OAuthConstants.Scope.OPENID);
             rs = ps.executeQuery();
 
             while (rs.next()) {
                 String accessToken = getPersistenceProcessor().getPreprocessedAccessTokenIdentifier(rs.getString(1));
                 String tokenId = rs.getString(2);
+                Timestamp timeCreated = rs.getTimestamp(3, Calendar.getInstance(TimeZone.getTimeZone(UTC)));
+                long issuedTimeInMillis = timeCreated.getTime();
+                long validityPeriodInMillis = rs.getLong(4);
 
                 AccessTokenDO accessTokenDO = new AccessTokenDO();
                 accessTokenDO.setAccessToken(accessToken);
                 accessTokenDO.setTokenId(tokenId);
                 accessTokens.add(accessTokenDO);
 
+                if (!isAccessTokenExpired(issuedTimeInMillis, validityPeriodInMillis)) {
+                    tokenMap.put(accessToken, accessTokenDO);
+                }
+
             }
             connection.commit();
+            accessTokens = new HashSet<>(tokenMap.values());
         } catch (SQLException e) {
             IdentityDatabaseUtil.rollBack(connection);
             throw new IdentityOAuth2Exception("Error occurred while getting access tokens from access token table for "

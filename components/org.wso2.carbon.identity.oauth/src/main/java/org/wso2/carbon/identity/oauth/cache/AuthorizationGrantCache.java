@@ -162,23 +162,6 @@ public class AuthorizationGrantCache extends BaseCache<AuthorizationGrantCacheKe
     }
 
     /**
-     * Retrieves a cache entry by authorization code and if there is a cache miss, retireve the cache entry from
-     * session store using code id.
-     *
-     * @param key cache key
-     * @param authzCodeId authorization code id
-     * @return cache entry
-     */
-    public AuthorizationGrantCacheEntry getValueFromCacheByCodeId(AuthorizationGrantCacheKey key, String authzCodeId) {
-
-        AuthorizationGrantCacheEntry cacheEntry = super.getValueFromCache(key);
-        if (cacheEntry == null) {
-            cacheEntry = getFromSessionStore(authzCodeId);
-        }
-        return cacheEntry;
-    }
-
-    /**
      * Clears a cache entry by authorization code.
      *
      * @param key Key to clear cache.

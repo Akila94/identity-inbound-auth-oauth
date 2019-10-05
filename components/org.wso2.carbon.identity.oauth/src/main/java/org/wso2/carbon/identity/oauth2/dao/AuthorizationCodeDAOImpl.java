@@ -530,6 +530,13 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
         return authorizationCodes;
     }
 
+    private boolean isAuthzCodeInOpenidScopeAndInActiveState(String[] scope, long issuedTimeInMillis,
+            long validityPeriodInMillis) {
+
+        return isAuthorizationCodeIssuedForOpenidScope(scope) && (
+                OAuth2Util.getTimeToExpire(issuedTimeInMillis, validityPeriodInMillis) > 0);
+    }
+
     /**
      * Checks whether the issued token is for openid scope.
      *
@@ -632,13 +639,21 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
             ps.setString(2, OAuthConstants.AuthorizationCodeState.ACTIVE);
             rs = ps.executeQuery();
             while (rs.next()) {
-                if (isHashDisabled) {
-                    AuthzCodeDO authzCodeDO = new AuthzCodeDO();
-                    String authzCode = getPersistenceProcessor().getPreprocessedAuthzCode(rs.getString(1));
-                    String codeId = rs.getString(2);
-                    authzCodeDO.setAuthorizationCode(authzCode);
-                    authzCodeDO.setAuthzCodeId(codeId);
-                    authzCodeDOs.add(authzCodeDO);
+
+                AuthzCodeDO authzCodeDO = new AuthzCodeDO();
+                String authzCode = getPersistenceProcessor().getPreprocessedAuthzCode(rs.getString(1));
+                String codeId = rs.getString(2);
+                Timestamp timeCreated = rs.getTimestamp(3, Calendar.getInstance(TimeZone.getTimeZone(UTC)));
+                long issuedTimeInMillis = timeCreated.getTime();
+                long validityPeriodInMillis = rs.getLong(4);
+                String[] scope = OAuth2Util.buildScopeArray(rs.getString(5));
+                authzCodeDO.setAuthorizationCode(authzCode);
+                authzCodeDO.setAuthzCodeId(codeId);
+
+                if (isAuthzCodeInOpenidScopeAndInActiveState(scope, issuedTimeInMillis, validityPeriodInMillis)) {
+                    if (isHashDisabled) {
+                        authzCodeDOs.add(authzCodeDO);
+                    }
                 }
             }
             connection.commit();

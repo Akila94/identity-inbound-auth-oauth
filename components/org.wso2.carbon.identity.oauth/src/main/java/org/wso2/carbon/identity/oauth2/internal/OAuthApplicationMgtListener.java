@@ -366,13 +366,8 @@ public class OAuthApplicationMgtListener extends AbstractApplicationMgtListener 
                     // Remove access token from AuthorizationGrantCache
                     AuthorizationGrantCacheKey grantCacheKey = new AuthorizationGrantCacheKey(
                             accessTokenDo.getAccessToken());
-                    AuthorizationGrantCacheEntry grantCacheEntry = (AuthorizationGrantCacheEntry) AuthorizationGrantCache
-                            .getInstance().getValueFromCacheByTokenId(grantCacheKey,accessTokenDo.getTokenId());
-                    if (grantCacheEntry != null) {
-                        AuthorizationGrantCache.getInstance()
-                                .clearCacheEntryByTokenId(grantCacheKey, accessTokenDo.getTokenId());
-                    }
-
+                    AuthorizationGrantCache.getInstance()
+                            .clearCacheEntryByTokenId(grantCacheKey, accessTokenDo.getTokenId());
                     // Remove access token from OAuthCache
                     OAuthCacheKey oauthCacheKey = new OAuthCacheKey(accessTokenDo.getAccessToken());
                     CacheEntry oauthCacheEntry = OAuthCache.getInstance().getValueFromCache(oauthCacheKey);
@@ -387,13 +382,8 @@ public class OAuthApplicationMgtListener extends AbstractApplicationMgtListener 
                     // Remove authorization code from AuthorizationGrantCache
                     AuthorizationGrantCacheKey grantCacheKey = new AuthorizationGrantCacheKey(
                             authzCodeDO.getAuthorizationCode());
-                    AuthorizationGrantCacheEntry grantCacheEntry = (AuthorizationGrantCacheEntry) AuthorizationGrantCache
-                            .getInstance().getValueFromCacheByCodeId(grantCacheKey, authzCodeDO.getAuthzCodeId());
-                    if (grantCacheEntry != null) {
-                        AuthorizationGrantCache.getInstance()
-                                .clearCacheEntryByCodeId(grantCacheKey, authzCodeDO.getAuthzCodeId());
-                    }
-
+                    AuthorizationGrantCache.getInstance()
+                            .clearCacheEntryByCodeId(grantCacheKey, authzCodeDO.getAuthzCodeId());
                     // Remove authorization code from OAuthCache
                     OAuthCacheKey oauthCacheKey = new OAuthCacheKey(authzCodeDO.getAuthorizationCode());
                     CacheEntry oauthCacheEntry = OAuthCache.getInstance().getValueFromCache(oauthCacheKey);
