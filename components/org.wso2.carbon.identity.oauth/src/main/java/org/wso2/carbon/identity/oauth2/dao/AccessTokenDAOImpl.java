@@ -1490,7 +1490,6 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
         PreparedStatement ps = null;
         ResultSet rs = null;
         Set<AccessTokenDO> accessTokens = new HashSet<>();
-        Map<String, AccessTokenDO> tokenMap = new HashMap<>();
         try {
             String sqlQuery = OAuth2Util.getTokenPartitionedSqlByUserStore(SQLQueries.
                     GET_ACCESS_TOKENS_AND_TOKEN_IDS_FOR_CONSUMER_KEY, userStoreDomain);
@@ -1507,18 +1506,17 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                 long issuedTimeInMillis = timeCreated.getTime();
                 long validityPeriodInMillis = rs.getLong(4);
 
-                AccessTokenDO accessTokenDO = new AccessTokenDO();
-                accessTokenDO.setAccessToken(accessToken);
-                accessTokenDO.setTokenId(tokenId);
-                accessTokens.add(accessTokenDO);
+
 
                 if (!isAccessTokenExpired(issuedTimeInMillis, validityPeriodInMillis)) {
-                    tokenMap.put(accessToken, accessTokenDO);
+                    AccessTokenDO accessTokenDO = new AccessTokenDO();
+                    accessTokenDO.setAccessToken(accessToken);
+                    accessTokenDO.setTokenId(tokenId);
+                    accessTokens.add(accessTokenDO);
                 }
 
             }
             connection.commit();
-            accessTokens = new HashSet<>(tokenMap.values());
         } catch (SQLException e) {
             IdentityDatabaseUtil.rollBack(connection);
             throw new IdentityOAuth2Exception("Error occurred while getting access tokens from access token table for "

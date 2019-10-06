@@ -530,7 +530,7 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
         return authorizationCodes;
     }
 
-    private boolean isAuthzCodeInOpenidScopeAndInActiveState(String[] scope, long issuedTimeInMillis,
+    private boolean isActiveAuthzCodeIssuedForOidcFlow(String[] scope, long issuedTimeInMillis,
             long validityPeriodInMillis) {
 
         return isAuthorizationCodeIssuedForOpenidScope(scope) && (
@@ -650,7 +650,7 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
                 authzCodeDO.setAuthorizationCode(authzCode);
                 authzCodeDO.setAuthzCodeId(codeId);
 
-                if (isAuthzCodeInOpenidScopeAndInActiveState(scope, issuedTimeInMillis, validityPeriodInMillis)) {
+                if (isActiveAuthzCodeIssuedForOidcFlow(scope, issuedTimeInMillis, validityPeriodInMillis)) {
                     if (isHashDisabled) {
                         authzCodeDOs.add(authzCodeDO);
                     }
