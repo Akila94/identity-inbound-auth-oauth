@@ -39,7 +39,6 @@ import org.wso2.carbon.identity.oauth.OAuthAdminService;
 import org.wso2.carbon.identity.oauth.OAuthUtil;
 import org.wso2.carbon.identity.oauth.cache.AppInfoCache;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCache;
-import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheEntry;
 import org.wso2.carbon.identity.oauth.cache.AuthorizationGrantCacheKey;
 import org.wso2.carbon.identity.oauth.cache.CacheEntry;
 import org.wso2.carbon.identity.oauth.cache.OAuthCache;
@@ -353,9 +352,9 @@ public class OAuthApplicationMgtListener extends AbstractApplicationMgtListener 
                 AppInfoCache appInfoCache = AppInfoCache.getInstance();
                 for (String oauthKey : oauthKeys) {
                     accessTokenDOSet.addAll(OAuthTokenPersistenceFactory.getInstance()
-                            .getAccessTokenDAO().getActiveTokenSetWithTokenIdByConsumerKey(oauthKey));
+                            .getAccessTokenDAO().getActiveTokenSetWithTokenIdByConsumerKeyForOpenidScope(oauthKey));
                     authzCodeDOSet.addAll(OAuthTokenPersistenceFactory.getInstance()
-                            .getAuthorizationCodeDAO().getAuthorizationCodeDOSetByConsumerKey(oauthKey));
+                            .getAuthorizationCodeDAO().getAuthorizationCodeDOSetByConsumerKeyForOpenidScope(oauthKey));
                     // Remove client credential from AppInfoCache
                     appInfoCache.clearCacheEntry(oauthKey);
                     OAuthCache.getInstance().clearCacheEntry(new OAuthCacheKey(oauthKey));

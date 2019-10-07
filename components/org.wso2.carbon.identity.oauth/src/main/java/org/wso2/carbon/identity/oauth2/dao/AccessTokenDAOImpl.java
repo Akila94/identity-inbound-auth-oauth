@@ -1394,20 +1394,20 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
      * @throws IdentityOAuth2Exception
      */
     @Override
-    public Set<AccessTokenDO> getActiveTokenSetWithTokenIdByConsumerKey(String consumerKey)
+    public Set<AccessTokenDO> getActiveTokenSetWithTokenIdByConsumerKeyForOpenidScope(String consumerKey)
             throws IdentityOAuth2Exception {
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving active access token set with token id of client: " + consumerKey);
         }
-        Set<AccessTokenDO> activeAccessTokenDOSet = getActiveAccessTokenSetByConsumerKey(consumerKey,
+        Set<AccessTokenDO> activeAccessTokenDOSet = getActiveAccessTokenSetByConsumerKeyForOpenidScope(consumerKey,
                 IdentityUtil.getPrimaryDomainName());
 
         if (OAuth2Util.checkAccessTokenPartitioningEnabled() && OAuth2Util.checkUserNameAssertionEnabled()) {
             Map<String, String> availableDomainMappings = OAuth2Util.getAvailableUserStoreDomainMappings();
             for (Map.Entry<String, String> availableDomainMapping : availableDomainMappings.entrySet()) {
                 activeAccessTokenDOSet
-                        .addAll(getActiveAccessTokenSetByConsumerKey(consumerKey, availableDomainMapping.getKey()));
+                        .addAll(getActiveAccessTokenSetByConsumerKeyForOpenidScope(consumerKey, availableDomainMapping.getKey()));
             }
         }
         return activeAccessTokenDOSet;
@@ -1483,7 +1483,7 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
      * @return set of access token data objects
      * @throws IdentityOAuth2Exception
      */
-    private Set<AccessTokenDO> getActiveAccessTokenSetByConsumerKey(String consumerKey, String userStoreDomain)
+    private Set<AccessTokenDO> getActiveAccessTokenSetByConsumerKeyForOpenidScope(String consumerKey, String userStoreDomain)
             throws IdentityOAuth2Exception {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection();
@@ -1505,8 +1505,6 @@ public class AccessTokenDAOImpl extends AbstractOAuthDAO implements AccessTokenD
                 Timestamp timeCreated = rs.getTimestamp(3, Calendar.getInstance(TimeZone.getTimeZone(UTC)));
                 long issuedTimeInMillis = timeCreated.getTime();
                 long validityPeriodInMillis = rs.getLong(4);
-
-
 
                 if (!isAccessTokenExpired(issuedTimeInMillis, validityPeriodInMillis)) {
                     AccessTokenDO accessTokenDO = new AccessTokenDO();

@@ -57,7 +57,7 @@ public interface AuthorizationCodeDAO {
         return null;
     }
 
-    default Set<AuthzCodeDO> getAuthorizationCodeDOSetByConsumerKey(String consumerKey) throws
+    default Set<AuthzCodeDO> getAuthorizationCodeDOSetByConsumerKeyForOpenidScope(String consumerKey) throws
             IdentityOAuth2Exception{
 
         return null;

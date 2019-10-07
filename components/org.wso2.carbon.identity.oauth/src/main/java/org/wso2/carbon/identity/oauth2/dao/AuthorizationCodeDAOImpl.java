@@ -623,7 +623,7 @@ public class AuthorizationCodeDAOImpl extends AbstractOAuthDAO implements Author
      * @return authorization code data object
      * @throws IdentityOAuth2Exception
      */
-    public Set<AuthzCodeDO> getAuthorizationCodeDOSetByConsumerKey(String consumerKey) throws IdentityOAuth2Exception {
+    public Set<AuthzCodeDO> getAuthorizationCodeDOSetByConsumerKeyForOpenidScope(String consumerKey) throws IdentityOAuth2Exception {
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving active authorization code data objects for client: " + consumerKey);
