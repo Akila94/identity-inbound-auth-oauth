@@ -122,7 +122,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
             throw new IdentityOAuth2Exception(
                     "Error while retrieving oauth issuer for the app with clientId: " + consumerKey, e);
         }
-        long startTime = System.currentTimeMillis();
+
         synchronized ((consumerKey + ":" + authorizedUser + ":" + scope).intern()) {
             AccessTokenDO existingTokenBean = null;
             if (isHashDisabled) {
@@ -136,11 +136,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
                         log.debug("RenewTokenPerRequest is enabled. " +
                                 "Proceeding to revoke any existing active tokens and issue new token for client Id: " +
                                 consumerKey + ", user: " + authorizedUser + " and scope: " + scope + ".");
-                    }
-                    long endTime = System.currentTimeMillis();
-                    long timeElapsed = endTime - startTime;
-                    if (log.isDebugEnabled()) {
-                        log.debug("[TCCSUB-52]-Time taken to execute the synch block: " + timeElapsed);
                     }
                     return renewAccessToken(tokReqMsgCtx, scope, consumerKey, existingTokenBean, oauthTokenIssuer);
                 }
@@ -284,7 +279,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
         try {
             OAuthTokenPersistenceFactory.getInstance().getAccessTokenDAO()
                     .insertAccessToken(newAccessToken, oAuth2AccessTokenReqDTO.getClientId(),
-                            newTokenBean, existingTokenBean, userStoreDomain);
+                    newTokenBean, existingTokenBean, userStoreDomain);
         } catch (IdentityException e) {
             throw new IdentityOAuth2Exception(
                     "Error occurred while storing new access token : " + newAccessToken, e);
@@ -308,23 +303,17 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     }
 
     private OAuth2AccessTokenRespDTO renewAccessToken(OAuthTokenReqMessageContext tokReqMsgCtx,
-                                                      String scope, String consumerKey, AccessTokenDO existingTokenBean, OauthTokenIssuer oauthTokenIssuer)
+            String scope, String consumerKey, AccessTokenDO existingTokenBean, OauthTokenIssuer oauthTokenIssuer)
             throws IdentityOAuth2Exception {
-        long startTime = System.currentTimeMillis();
         revokeExistingToken(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getoAuthClientAuthnContext(),
                 existingTokenBean.getAccessToken());
-        long endTime = System.currentTimeMillis();
-        long timeElapsed = endTime - startTime;
-        if (log.isDebugEnabled()) {
-            log.debug("[TCCSUB-52]-Time taken to revoke existing token: " + timeElapsed);
-        }
         // Passing existingTokenBean as null since it is already revoked
         return generateNewAccessToken(tokReqMsgCtx, scope, consumerKey, null,
                 oauthTokenIssuer);
     }
 
     private OAuth2AccessTokenRespDTO issueExistingAccessToken(OAuthTokenReqMessageContext tokReqMsgCtx,
-                                                              String scope, long expireTime, AccessTokenDO existingTokenBean)
+            String scope, long expireTime, AccessTokenDO existingTokenBean)
             throws IdentityOAuth2Exception {
         tokReqMsgCtx.addProperty(EXISTING_TOKEN_ISSUED, true);
         setDetailsToMessageContext(tokReqMsgCtx, existingTokenBean);
@@ -332,10 +321,9 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     }
 
     private OAuth2AccessTokenRespDTO generateNewAccessToken(OAuthTokenReqMessageContext tokReqMsgCtx,
-                                                            String scope, String consumerKey, AccessTokenDO existingTokenBean, OauthTokenIssuer oauthTokenIssuer)
+            String scope, String consumerKey, AccessTokenDO existingTokenBean, OauthTokenIssuer oauthTokenIssuer)
             throws IdentityOAuth2Exception {
 
-        long startTime = System.currentTimeMillis();
         OAuthAppDO oAuthAppBean = getoAuthApp(consumerKey);
         Timestamp timestamp = new Timestamp(new Date().getTime());
         long validityPeriodInMillis = getConfiguredExpiryTimeForApplication(tokReqMsgCtx, consumerKey, oAuthAppBean);
@@ -347,11 +335,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
                 newTokenBean.getAccessToken());
         //update cache with newly added token
         updateCacheIfEnabled(newTokenBean, OAuth2Util.buildScopeString(tokReqMsgCtx.getScope()));
-        long endTime = System.currentTimeMillis();
-        long timeElapsed = endTime - startTime;
-        if (log.isDebugEnabled()) {
-            log.debug("[TCCSUB-52]-Time taken to generate a new token: " + timeElapsed);
-        }
         return createResponseWithTokenBean(newTokenBean, validityPeriodInMillis, scope);
     }
 
@@ -374,8 +357,8 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     }
 
     private AccessTokenDO createNewTokenBean(OAuthTokenReqMessageContext tokReqMsgCtx, OAuthAppDO oAuthAppBean,
-                                             AccessTokenDO existingTokenBean, Timestamp timestamp, long validityPeriodInMillis,
-                                             OauthTokenIssuer oauthTokenIssuer) throws IdentityOAuth2Exception {
+            AccessTokenDO existingTokenBean, Timestamp timestamp, long validityPeriodInMillis,
+            OauthTokenIssuer oauthTokenIssuer) throws IdentityOAuth2Exception {
         String tenantDomain = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getTenantDomain();
         OAuth2AccessTokenReqDTO tokenReq = tokReqMsgCtx.getOauth2AccessTokenReqDTO();
         validateGrantTypeParam(tokenReq);
@@ -399,8 +382,8 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     }
 
     private void setRefreshTokenDetails(OAuthTokenReqMessageContext tokReqMsgCtx, OAuthAppDO oAuthAppBean,
-                                        AccessTokenDO existingTokenBean, Timestamp timestamp, long validityPeriodInMillis,
-                                        OAuth2AccessTokenReqDTO tokenReq, AccessTokenDO newTokenBean, OauthTokenIssuer oauthTokenIssuer)
+            AccessTokenDO existingTokenBean, Timestamp timestamp, long validityPeriodInMillis,
+            OAuth2AccessTokenReqDTO tokenReq, AccessTokenDO newTokenBean, OauthTokenIssuer oauthTokenIssuer)
             throws IdentityOAuth2Exception {
         if (isRefreshTokenValid(existingTokenBean, validityPeriodInMillis, tokenReq.getClientId())) {
             setRefreshTokenDetailsFromExistingToken(existingTokenBean, newTokenBean);
@@ -540,7 +523,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     private OAuth2AccessTokenRespDTO createResponseWithTokenBean(AccessTokenDO existingAccessTokenDO,
                                                                  long expireTimeMillis, String scope)
             throws IdentityOAuth2Exception {
-        long startTime = System.currentTimeMillis();
         OAuth2AccessTokenRespDTO tokenRespDTO = new OAuth2AccessTokenRespDTO();
         tokenRespDTO.setAccessToken(existingAccessTokenDO.getAccessToken());
         tokenRespDTO.setTokenId(existingAccessTokenDO.getTokenId());
@@ -577,11 +559,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
             tokenRespDTO.setExpiresInMillis(Long.MAX_VALUE);
         }
         tokenRespDTO.setAuthorizedScopes(scope);
-        long endTime = System.currentTimeMillis();
-        long timeElapsed = endTime - startTime;
-        if (log.isDebugEnabled()) {
-            log.debug("[TCCSUB-52]-Time taken to create response with TokenBean: " + timeElapsed);
-        }
         return tokenRespDTO;
     }
 
@@ -738,13 +715,10 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
     private AccessTokenDO getExistingTokenFromDB(OAuthTokenReqMessageContext tokenMsgCtx,
                                                  OAuth2AccessTokenReqDTO tokenReq, String scope, OAuthCacheKey cacheKey)
             throws IdentityOAuth2Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("[TCCSUB-52]-Getting the token from the database.");
-        }
         AccessTokenDO existingToken = OAuthTokenPersistenceFactory.getInstance()
                 .getAccessTokenDAO().getLatestAccessToken(tokenReq
-                                .getClientId(),
-                        tokenMsgCtx.getAuthorizedUser(), getUserStoreDomain(tokenMsgCtx.getAuthorizedUser()), scope, false);
+                        .getClientId(),
+                tokenMsgCtx.getAuthorizedUser(), getUserStoreDomain(tokenMsgCtx.getAuthorizedUser()), scope, false);
         if (existingToken != null) {
             if (log.isDebugEnabled()) {
                 if (IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
@@ -771,9 +745,6 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
                                                     String scope) throws IdentityOAuth2Exception {
         AccessTokenDO existingToken = null;
         CacheEntry cacheEntry = oauthCache.getValueFromCache(cacheKey);
-        if (log.isDebugEnabled()) {
-            log.debug("[TCCSUB-52]-Getting the token from the cache.");
-        }
         if (cacheEntry != null && cacheEntry instanceof AccessTokenDO) {
             existingToken = (AccessTokenDO) cacheEntry;
             if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.ACCESS_TOKEN)) {
