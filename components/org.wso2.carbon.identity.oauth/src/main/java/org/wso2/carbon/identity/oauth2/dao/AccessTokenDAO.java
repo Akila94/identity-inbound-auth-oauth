@@ -58,6 +58,12 @@ public interface AccessTokenDAO {
         return null;
     }
 
+    default Set<AccessTokenDO> getActiveTokenSetWithTokenIdByConsumerKeyForOpenidScope(String consumerKey)
+            throws IdentityOAuth2Exception {
+
+        return null;
+    }
+
     Set<String> getActiveTokensByConsumerKey(String consumerKey) throws IdentityOAuth2Exception;
 
     Set<AccessTokenDO> getActiveAcessTokenDataByConsumerKey(String consumerKey) throws IdentityOAuth2Exception;
