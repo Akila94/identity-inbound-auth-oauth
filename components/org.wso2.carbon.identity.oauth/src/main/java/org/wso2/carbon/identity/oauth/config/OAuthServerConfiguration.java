@@ -188,6 +188,7 @@ public class OAuthServerConfiguration {
 
     // OpenID Connect configurations
     private String openIDConnectIDTokenBuilderClassName = "org.wso2.carbon.identity.openidconnect.DefaultIDTokenBuilder";
+    private boolean redirectToOAuth2ErrorPage = false;
     private String defaultRequestValidatorClassName = "org.wso2.carbon.identity.openidconnect.RequestObjectValidatorImpl";
     private String openIDConnectIDTokenCustomClaimsHanlderClassName = "org.wso2.carbon.identity.openidconnect.SAMLAssertionClaimsCallback";
     private IDTokenBuilder openIDConnectIDTokenBuilder = null;
@@ -1007,6 +1008,10 @@ public class OAuthServerConfiguration {
 
     public String getIdTokenSignatureAlgorithm() {
         return idTokenSignatureAlgorithm;
+    }
+
+    public boolean getRedirectToOAuth2ErrorPage() {
+        return redirectToOAuth2ErrorPage;
     }
 
     public String getDefaultIdTokenEncryptionAlgorithm() {
@@ -2365,6 +2370,13 @@ public class OAuthServerConfiguration {
                                 .getText().trim();
             }
 
+            OMElement redirectToErrorPageElem = openIDConnectConfigElem.getFirstChildWithName(
+                    getQNameWithIdentityNS(ConfigElements.REDIRECT_TO_OAUTH2_ERROR_PAGE));
+
+            if (redirectToErrorPageElem != null) {
+                redirectToOAuth2ErrorPage = Boolean.parseBoolean(redirectToErrorPageElem.getText());
+            }
+
             if (openIDConnectConfigElem.getFirstChildWithName(getQNameWithIdentityNS(ConfigElements.SIGNATURE_ALGORITHM)) != null) {
                 idTokenSignatureAlgorithm =
                         openIDConnectConfigElem.getFirstChildWithName(getQNameWithIdentityNS(ConfigElements.SIGNATURE_ALGORITHM))
@@ -2717,6 +2729,7 @@ public class OAuthServerConfiguration {
         // OpenIDConnect configurations
         public static final String OPENID_CONNECT = "OpenIDConnect";
         public static final String OPENID_CONNECT_IDTOKEN_BUILDER = "IDTokenBuilder";
+        public static final String REDIRECT_TO_OAUTH2_ERROR_PAGE = "RedirectToOAuth2ErrorPage";
         public static final String OPENID_CONNECT_IDTOKEN_SUB_CLAIM = "IDTokenSubjectClaim";
         public static final String OPENID_CONNECT_IDTOKEN_ISSUER_ID = "IDTokenIssuerID";
         public static final String OPENID_CONNECT_IDTOKEN_EXPIRATION = "IDTokenExpiration";

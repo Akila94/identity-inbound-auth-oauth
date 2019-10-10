@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.oauth.endpoint.state;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.endpoint.OAuthRequestWrapper;
 import org.wso2.carbon.identity.oauth.endpoint.exception.AccessDeniedException;
 import org.wso2.carbon.identity.oauth.endpoint.exception.BadRequestException;
@@ -114,7 +115,18 @@ public class OAuthRequestStateValidator {
                 oAuthMessage.setSessionDataKeyFromConsent(null);
             }
         }
+        // If the property value <RedirectToOAuth2ErrorPage> is true and if client_id is invalid skip this validation to
+        // redirect the response to a proper error page  in authorization requests.
+        if (!OAuthServerConfiguration.getInstance().getRedirectToOAuth2ErrorPage()) {
+            validateOauthApplication(oAuthMessage);
+        }
+    }
 
+    private void validateOauthApplication(OAuthMessage oAuthMessage) throws InvalidRequestParentException {
+
+        if (StringUtils.isNotBlank(oAuthMessage.getClientId())) {
+            EndpointUtil.validateOauthApplication(oAuthMessage.getClientId());
+        }
     }
 
     private void validateInputParameters(OAuthMessage oAuthMessage) throws InvalidRequestException {
