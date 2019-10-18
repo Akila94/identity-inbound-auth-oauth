@@ -1289,7 +1289,7 @@ public class OAuth2Util {
     public static boolean isImplicitResponseType(String responseType) {
 
         return (StringUtils.isNotBlank(responseType) && (OAuthConstants.ID_TOKEN).equals(responseType) ||
-                (OAuthConstants.TOKEN).equals(responseType) || responseType.equals(OAuthConstants.IDTOKEN_TOKEN));
+                (OAuthConstants.TOKEN).equals(responseType) || (OAuthConstants.IDTOKEN_TOKEN).equals(responseType));
     }
 
     /**
