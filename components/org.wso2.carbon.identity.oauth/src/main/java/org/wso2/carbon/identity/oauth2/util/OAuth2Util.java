@@ -2153,9 +2153,9 @@ public class OAuth2Util {
     /**
      * Helper method to add algo into to JWT_HEADER to signature verification.
      *
-     * @param certThumbprint
-     * @param signatureAlgorithm
-     * @return
+     * @param certThumbprint  thumbPrint generated for certificate
+     * @param signatureAlgorithm  relevant signature algorithm
+     * @return KID
      */
     public static String getKID(String certThumbprint, JWSAlgorithm signatureAlgorithm) {
 
@@ -2200,9 +2200,9 @@ public class OAuth2Util {
      * Helper method to add public certificate to JWT_HEADER to signature verification.
      * This creates thumbPrints directly from given certificates
      *
-     * @param certificate
-     * @param alias
-     * @return
+     * @param certificate  certificate related to the key
+     * @param alias  alias of the key
+     * @return ThumbPrint
      * @throws IdentityOAuth2Exception
      */
     public static String getThumbPrint(Certificate certificate, String alias) throws IdentityOAuth2Exception {

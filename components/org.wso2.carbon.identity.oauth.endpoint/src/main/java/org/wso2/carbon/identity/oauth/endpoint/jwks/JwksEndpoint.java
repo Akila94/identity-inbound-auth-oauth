@@ -162,6 +162,7 @@ public class JwksEndpoint {
 
     /**
      * This method read identity.xml and find different signing algorithms
+     *
      * @param accessTokenSignAlgorithm
      * @param config
      * @return
