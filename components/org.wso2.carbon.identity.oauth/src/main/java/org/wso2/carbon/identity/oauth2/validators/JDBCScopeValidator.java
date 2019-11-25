@@ -49,6 +49,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -260,10 +261,18 @@ public class JDBCScopeValidator extends OAuth2ScopeValidator {
             }
             return false;
         }
-        //Check if the user still has a valid role for this scope.
-        rolesOfScope.retainAll(Arrays.asList(userRoles));
 
+        //Check if the user still has a valid role for this scope.
+        Set<String> scopeRoles = new HashSet<>(rolesOfScope);
+        rolesOfScope.retainAll(Arrays.asList(userRoles));
         if (rolesOfScope.isEmpty()) {
+            for (String role : scopeRoles) {
+                for (String userRole : userRoles) {
+                    if (role.startsWith("internal/") && role.equalsIgnoreCase(userRole)) {
+                        return true;
+                    }
+                }
+            }
             if (log.isDebugEnabled()) {
                 log.debug("User does not have required roles for scope " + scopeName);
             }
