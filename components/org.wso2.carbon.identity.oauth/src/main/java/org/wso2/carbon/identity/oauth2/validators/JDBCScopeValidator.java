@@ -268,14 +268,11 @@ public class JDBCScopeValidator extends OAuth2ScopeValidator {
         Set<String> scopeRoles = new HashSet<>(rolesOfScope);
         rolesOfScope.retainAll(Arrays.asList(userRoles));
         if (rolesOfScope.isEmpty()) {
-            for (String role : scopeRoles) {
-                int index = role.indexOf(CarbonConstants.DOMAIN_SEPARATOR);
-                String domain = role.substring(0, index);
-                for (String userRole : userRoles) {
-                    if (UserCoreConstants.INTERNAL_DOMAIN.equalsIgnoreCase(domain) && role.equalsIgnoreCase(userRole)) {
-                        return true;
-                    }
-                }
+            // when the role is an internal one, check if the user has valid role
+            boolean validInternalUserRole = validateInternalUserRoles(scopeRoles, userRoles);
+
+            if (validInternalUserRole) {
+                return true;
             }
             if (log.isDebugEnabled()) {
                 log.debug("User does not have required roles for scope " + scopeName);
@@ -284,6 +281,25 @@ public class JDBCScopeValidator extends OAuth2ScopeValidator {
         }
 
         return true;
+    }
+
+    /**
+     * This method used to validate scopes which bind with internal roles
+     * @param scopeRoles roles in scope
+     * @param userRoles user roles
+     * @return
+     */
+    private boolean validateInternalUserRoles(Set<String> scopeRoles,  String[] userRoles) {
+        for (String role : scopeRoles) {
+            int index = role.indexOf(CarbonConstants.DOMAIN_SEPARATOR);
+            String domain = role.substring(0, index);
+            for (String userRole : userRoles) {
+                if (UserCoreConstants.INTERNAL_DOMAIN.equalsIgnoreCase(domain) && role.equalsIgnoreCase(userRole)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private String[] getUserRoles(User user) throws UserStoreException {
