@@ -293,9 +293,11 @@ public class JDBCScopeValidator extends OAuth2ScopeValidator {
         for (String role : scopeRoles) {
             int index = role.indexOf(CarbonConstants.DOMAIN_SEPARATOR);
             String domain = role.substring(0, index);
-            for (String userRole : userRoles) {
-                if (UserCoreConstants.INTERNAL_DOMAIN.equalsIgnoreCase(domain) && role.equalsIgnoreCase(userRole)) {
-                    return true;
+            if (UserCoreConstants.INTERNAL_DOMAIN.equalsIgnoreCase(domain)) {
+                for (String userRole : userRoles) {
+                    if (role.equalsIgnoreCase(userRole)) {
+                        return true;
+                    }
                 }
             }
         }
