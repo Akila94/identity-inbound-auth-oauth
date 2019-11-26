@@ -23,6 +23,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
@@ -44,6 +45,7 @@ import org.wso2.carbon.identity.oauth2.model.ResourceScopeCacheEntry;
 import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.api.UserStoreManager;
+import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
@@ -267,10 +269,10 @@ public class JDBCScopeValidator extends OAuth2ScopeValidator {
         rolesOfScope.retainAll(Arrays.asList(userRoles));
         if (rolesOfScope.isEmpty()) {
             for (String role : scopeRoles) {
-                int index = role.indexOf("/");
+                int index = role.indexOf(CarbonConstants.DOMAIN_SEPARATOR);
                 String domain = role.substring(0, index);
                 for (String userRole : userRoles) {
-                    if ("Internal".equalsIgnoreCase(domain) && role.equalsIgnoreCase(userRole)) {
+                    if (UserCoreConstants.INTERNAL_DOMAIN.equalsIgnoreCase(domain) && role.equalsIgnoreCase(userRole)) {
                         return true;
                     }
                 }
