@@ -2044,7 +2044,7 @@ public class OAuth2Util {
                         "client_id: " + clientId + " with the tenant domain: " + spTenantDomain, e);
             }
         } else {
-            publicCert = getPublicCertFromJWKS(jwksUri, null);
+            publicCert = getPublicCertFromJWKS(jwksUri);
             thumbPrint = getJwkThumbPrint(publicCert);
         }
         Key publicKey = publicCert.getPublicKey();
@@ -3033,46 +3033,39 @@ public class OAuth2Util {
      * Get public certificate from JWKS when kid and JWKS Uri is given.
      *
      * @param jwksUri - JWKS Uri
-     * @param keyId   - keyId (kid)
      * @return - X509Certificate
      * @throws IdentityOAuth2Exception - IdentityOAuth2Exception
      */
-    private static X509Certificate getPublicCertFromJWKS(String jwksUri, String keyId) throws IdentityOAuth2Exception {
+    private static X509Certificate getPublicCertFromJWKS(String jwksUri) throws IdentityOAuth2Exception {
         if (log.isDebugEnabled()) {
             log.debug("Attempting to retrieve public certificate from the Jwks uri.");
         }
         try {
             JWKSet publicKeys = JWKSet.load(new URL(jwksUri));
             JWK jwk = null;
-            X509Certificate certificate = null;
-            if (!StringUtils.isBlank(keyId)) {
-                jwk = publicKeys.getKeyByKeyId(keyId);
-            } else {
-                //if kid is null, get the first signing JWK from the list
-                List<JWK> jwkList = publicKeys.getKeys();
+            X509Certificate certificate;
+            //Get the first signing JWK from the list
+            List<JWK> jwkList = publicKeys.getKeys();
 
-                for (JWK currentJwk : jwkList) {
-                    if (KeyUse.SIGNATURE == currentJwk.getKeyUse()) {
-                        jwk = currentJwk;
-                        break;
-                    }
+            for (JWK currentJwk : jwkList) {
+                if (KeyUse.SIGNATURE == currentJwk.getKeyUse()) {
+                    jwk = currentJwk;
+                    break;
                 }
             }
+
             if (jwk != null) {
                 certificate = jwk.getParsedX509CertChain().get(0);
                 if (log.isDebugEnabled()) {
-                    log.debug(String.format("Retrieved the public signing certificate with kid %s " +
-                            "successfully from the JWKS", keyId));
+                    log.debug("Retrieved the public signing certificate successfully from the JWKS");
                 }
                 return certificate;
             } else {
-                log.error(String.format("Failed to retrieve public certificate with kid %s from JWKS uri %s",
-                        keyId, jwksUri));
+                log.error(String.format("Failed to retrieve public certificate from JWKS uri %s", jwksUri));
                 throw new IdentityOAuth2Exception("Failed to retrieve public certificate from JWKS.");
             }
         } catch (ParseException | IOException e) {
-            log.error(String.format("Failed to retrieve public certificate with kid %s from JWKS uri %s",
-                    keyId, jwksUri));
+            log.error(String.format("Failed to retrieve public certificate from JWKS uri %s", jwksUri));
             throw new IdentityOAuth2Exception("Failed to retrieve public certificate from JWKS.", e);
         }
     }
@@ -3082,7 +3075,7 @@ public class OAuth2Util {
      *
      * @param clientId       - ClientId
      * @param spTenantDomain - Tenant domain
-     * @return
+     * @return Jwks Url
      * @throws IdentityOAuth2Exception
      */
     private static String getSPJwksUrl(String clientId, String spTenantDomain) throws IdentityOAuth2Exception {
@@ -3116,10 +3109,10 @@ public class OAuth2Util {
             log.debug("Calculating SHA-1 JWK thumb-print");
         }
         try {
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            CertificateFactory cf = CertificateFactory.getInstance(Constants.X509);
             ByteArrayInputStream bais = new ByteArrayInputStream(certificate.getEncoded());
             X509Certificate x509 = (X509Certificate) cf.generateCertificate(bais);
-            Base64URL jwkThumbprint = RSAKey.parse(x509).computeThumbprint("SHA-1");
+            Base64URL jwkThumbprint = RSAKey.parse(x509).computeThumbprint(Constants.SHA1);
             return jwkThumbprint.toString();
         } catch (CertificateException | JOSEException e) {
             throw new IdentityOAuth2Exception("Error occurred while generating SHA-1 JWK thumbprint", e);
