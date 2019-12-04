@@ -411,7 +411,7 @@ public class RefreshGrantHandler extends AbstractAuthorizationGrantHandler {
         OAuthAppDO oAuthAppDO = getOAuthApp(tokenReq.getClientId());
         createTokens(accessTokenDO, tokReqMsgCtx);
         setRefreshTokenData(accessTokenDO, tokenReq, validationBean, oAuthAppDO, accessTokenDO.getRefreshToken(),
-                timestamp);
+                timestamp, tokReqMsgCtx);
         modifyTokensIfUsernameAssertionEnabled(accessTokenDO, tokReqMsgCtx);
         setValidityPeriod(accessTokenDO, tokReqMsgCtx, oAuthAppDO);
     }
@@ -511,7 +511,8 @@ public class RefreshGrantHandler extends AbstractAuthorizationGrantHandler {
                                      OAuth2AccessTokenReqDTO tokenReq,
                                      RefreshTokenValidationDataDO validationBean,
                                      OAuthAppDO oAuthAppDO,
-                                     String refreshToken, Timestamp timestamp) {
+                                     String refreshToken, Timestamp timestamp,
+                                     OAuthTokenReqMessageContext tokenReqMessageContext) {
         Timestamp refreshTokenIssuedTime = null;
         long refreshTokenValidityPeriod = 0;
         boolean renew = getRenewRefreshTokenProperty(oAuthAppDO.getRenewRefreshTokenEnabled());
@@ -527,10 +528,11 @@ public class RefreshGrantHandler extends AbstractAuthorizationGrantHandler {
         accessTokenDO.setRefreshToken(refreshToken);
         accessTokenDO.setRefreshTokenIssuedTime(refreshTokenIssuedTime);
         accessTokenDO.setRefreshTokenValidityPeriodInMillis(
-                getRefreshTokenValidityPeriod(refreshTokenValidityPeriod, oAuthAppDO));
+                getRefreshTokenValidityPeriod(refreshTokenValidityPeriod, oAuthAppDO, tokenReqMessageContext));
     }
 
-    private long getRefreshTokenValidityPeriod(long refreshTokenValidityPeriod, OAuthAppDO oAuthAppDO) {
+    private long getRefreshTokenValidityPeriod(long refreshTokenValidityPeriod, OAuthAppDO oAuthAppDO,
+                                               OAuthTokenReqMessageContext tokenReqMessageContext) {
         // If issuing new refresh token, use default refresh token validity Period
         // otherwise use existing refresh token's validity period
         if (refreshTokenValidityPeriod == 0) {
@@ -540,6 +542,9 @@ public class RefreshGrantHandler extends AbstractAuthorizationGrantHandler {
                 refreshTokenValidityPeriod = OAuthServerConfiguration.getInstance()
                         .getRefreshTokenValidityPeriodInSeconds() * SECONDS_TO_MILISECONDS_FACTOR;
             }
+        } else if (tokenReqMessageContext.getRefreshTokenvalidityPeriod() != OAuthConstants.UNASSIGNED_VALIDITY_PERIOD) {
+            refreshTokenValidityPeriod = tokenReqMessageContext
+                    .getRefreshTokenvalidityPeriod() * SECONDS_TO_MILISECONDS_FACTOR;
         }
         return refreshTokenValidityPeriod;
     }
