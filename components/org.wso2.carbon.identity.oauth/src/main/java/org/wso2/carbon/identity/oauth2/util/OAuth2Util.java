@@ -1292,6 +1292,13 @@ public class OAuth2Util {
                 (OAuthConstants.TOKEN).equals(responseType) || (OAuthConstants.IDTOKEN_TOKEN).equals(responseType));
     }
 
+    public static boolean isHybridResponseType(String responseType) {
+
+        return (StringUtils.isNotBlank(responseType) && (OAuthConstants.CODE_TOKEN).equals(responseType) ||
+                (OAuthConstants.CODE_IDTOKEN).equals(responseType) || (OAuthConstants.CODE_IDTOKEN_TOKEN).equals
+                (responseType));
+    }
+
     /**
      * To populate the database in the very first server startup.
      *
