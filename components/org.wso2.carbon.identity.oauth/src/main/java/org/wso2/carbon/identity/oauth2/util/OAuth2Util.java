@@ -3066,7 +3066,6 @@ public class OAuth2Util {
                 }
                 return certificate;
             } else {
-                log.error(String.format("Failed to retrieve public certificate from JWKS uri %s", jwksUri));
                 throw new IdentityOAuth2Exception("Failed to retrieve public certificate from JWKS.");
             }
         } catch (ParseException | IOException e) {
