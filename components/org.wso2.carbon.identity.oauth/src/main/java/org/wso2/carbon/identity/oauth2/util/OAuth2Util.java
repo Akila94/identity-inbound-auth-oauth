@@ -2046,7 +2046,7 @@ public class OAuth2Util {
             }
         } else {
             if (log.isDebugEnabled()) {
-                log.debug(String.format("Fetching public keys from jwks uri %s", jwksUri));
+                log.debug(String.format("Fetching public keys for the client %s from jwks uri %s", clientId,  jwksUri));
             }
             publicCert = getPublicCertFromJWKS(jwksUri);
             thumbPrint = getJwkThumbPrint(publicCert);
@@ -3042,7 +3042,7 @@ public class OAuth2Util {
      */
     private static X509Certificate getPublicCertFromJWKS(String jwksUri) throws IdentityOAuth2Exception {
         if (log.isDebugEnabled()) {
-            log.debug("Attempting to retrieve public certificate from the Jwks uri.");
+            log.debug(String.format("Attempting to retrieve public certificate from the Jwks uri: %s.", jwksUri));
         }
         try {
             JWKSet publicKeys = JWKSet.load(new URL(jwksUri));
@@ -3061,7 +3061,8 @@ public class OAuth2Util {
             if (jwk != null) {
                 certificate = jwk.getParsedX509CertChain().get(0);
                 if (log.isDebugEnabled()) {
-                    log.debug("Retrieved the public signing certificate successfully from the JWKS");
+                    log.debug(String.format("Retrieved the public signing certificate successfully from the " +
+                            "jwks uri: %s", jwksUri));
                 }
                 return certificate;
             } else {
@@ -3069,7 +3070,6 @@ public class OAuth2Util {
                 throw new IdentityOAuth2Exception("Failed to retrieve public certificate from JWKS.");
             }
         } catch (ParseException | IOException e) {
-            log.error(String.format("Failed to retrieve public certificate from JWKS uri %s", jwksUri));
             throw new IdentityOAuth2Exception("Failed to retrieve public certificate from JWKS.", e);
         }
     }
@@ -3110,7 +3110,7 @@ public class OAuth2Util {
     public static String getJwkThumbPrint(Certificate certificate) throws IdentityOAuth2Exception {
 
         if (log.isDebugEnabled()) {
-            log.debug("Calculating SHA-1 JWK thumb-print");
+            log.debug(String.format("Calculating SHA-1 JWK thumb-print for certificate: %s", certificate.toString()));
         }
         try {
             CertificateFactory cf = CertificateFactory.getInstance(Constants.X509);
