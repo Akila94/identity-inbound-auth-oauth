@@ -2034,7 +2034,8 @@ public class OAuth2Util {
 
         if (StringUtils.isBlank(jwksUri)) {
             if (log.isDebugEnabled()) {
-                log.debug(String.format("Jwks uri is not configured for the service provider %s", clientId));
+                log.debug(String.format("Jwks uri is not configured for the service provider %s. Checking for " +
+                        "x509 certificate", clientId));
             }
             publicCert = getX509CertOfOAuthApp(clientId, spTenantDomain);
             try {
@@ -2044,6 +2045,9 @@ public class OAuth2Util {
                         "client_id: " + clientId + " with the tenant domain: " + spTenantDomain, e);
             }
         } else {
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Fetching public keys from jwks uri %s", jwksUri));
+            }
             publicCert = getPublicCertFromJWKS(jwksUri);
             thumbPrint = getJwkThumbPrint(publicCert);
         }
