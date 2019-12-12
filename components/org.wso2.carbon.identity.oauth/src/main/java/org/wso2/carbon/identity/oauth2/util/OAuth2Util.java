@@ -3066,10 +3066,12 @@ public class OAuth2Util {
                 }
                 return certificate;
             } else {
-                throw new IdentityOAuth2Exception("Failed to retrieve public certificate from JWKS.");
+                throw new IdentityOAuth2Exception(String.format("Failed to retrieve public certificate from " +
+                        "jwks uri: %s", jwksUri));
             }
         } catch (ParseException | IOException e) {
-            throw new IdentityOAuth2Exception("Failed to retrieve public certificate from JWKS.", e);
+            throw new IdentityOAuth2Exception(String.format("Failed to retrieve public certificate from " +
+                    "jwks uri: %s", jwksUri), e);
         }
     }
 
@@ -3116,6 +3118,10 @@ public class OAuth2Util {
             ByteArrayInputStream bais = new ByteArrayInputStream(certificate.getEncoded());
             X509Certificate x509 = (X509Certificate) cf.generateCertificate(bais);
             Base64URL jwkThumbprint = RSAKey.parse(x509).computeThumbprint(Constants.SHA1);
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("Calculated SHA-1 JWK thumbprint %s from the certificate",
+                        jwkThumbprint.toString()));
+            }
             return jwkThumbprint.toString();
         } catch (CertificateException | JOSEException e) {
             throw new IdentityOAuth2Exception("Error occurred while generating SHA-1 JWK thumbprint", e);
