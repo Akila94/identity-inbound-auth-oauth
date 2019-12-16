@@ -1548,10 +1548,9 @@ public class OAuth2Util {
     private static List<String> getAudienceListFromOAuthAppDO(OAuthAppDO oAuthAppDO) {
 
         if (oAuthAppDO.getAudiences() == null) {
-            return new ArrayList<>();
-        } else {
-            return new ArrayList<>(Arrays.asList(oAuthAppDO.getAudiences()));
+            return Collections.emptyList();
         }
+        return Arrays.asList(oAuthAppDO.getAudiences());
     }
 
     private static List<String> getDefinedCustomOIDCAudiences(OAuthAppDO oAuthAppDO) {
