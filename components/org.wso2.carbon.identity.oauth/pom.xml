@@ -259,8 +259,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.wso2.orbit.org.opensaml</groupId>
-            <artifactId>opensaml</artifactId>
+            <groupId>org.opensaml</groupId>
+            <artifactId>openws</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
