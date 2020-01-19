@@ -18,6 +18,8 @@
 
 package org.wso2.carbon.identity.oauth.event;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.handler.IdentityHandler;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.authz.OAuthAuthzReqMessageContext;
@@ -36,6 +38,8 @@ import org.wso2.carbon.identity.oauth2.token.OAuthTokenReqMessageContext;
 import java.util.Map;
 
 public interface OAuthEventInterceptor extends IdentityHandler {
+
+    static Log log = LogFactory.getLog(OAuthEventInterceptor.class);
 
     /**
      * Called prior to issuing tokens.
@@ -195,7 +199,8 @@ public interface OAuthEventInterceptor extends IdentityHandler {
      */
     default void onTokenValidationException(OAuth2TokenValidationRequestDTO introspectionRequest,
                                             Map<String, Object> params) throws IdentityOAuth2Exception {
-
-        // Nothing to implement
+        if (log.isDebugEnabled()) {
+            log.debug("This is the default implementation.");
+        }
     }
 }
