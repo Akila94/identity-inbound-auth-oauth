@@ -295,7 +295,6 @@ public class OAuthServerConfiguration {
             parseScopeValidator(scopeValidatorsElem);
         }
 
-        //Get scopeValidationEnabledConfigValue
         OMElement scopeValidationElem = oauthElem.getFirstChildWithName(
                 getQNameWithIdentityNS(ConfigElements.SCOPE_VALIDATION_FOR_AUTHZ_CODE_AND_IMPLICIT));
 
@@ -2683,6 +2682,7 @@ public class OAuthServerConfiguration {
     }
 
     public boolean isScopeValidationEnabledForCodeAndImplicitGrant() {
+
         return scopeValidationConfigValue;
     }
 
@@ -2872,7 +2872,7 @@ public class OAuthServerConfiguration {
         // Enable/Disable token renewal on each request to the token endpoint
         private static final String RENEW_TOKEN_PER_REQUEST = "RenewTokenPerRequest";
 
-        // Enable/Disable scope validation for implicit grant and authorization code grant
+        // Enable/Disable scope validation for implicit grant and authorization code grant.
         private static final String SCOPE_VALIDATION_FOR_AUTHZ_CODE_AND_IMPLICIT =
                 "ScopeValidationEnabledForAuthzCodeAndImplicitGrant";
     }
