@@ -3011,7 +3011,8 @@ public class OAuth2Util {
     /**
      * Extract information related to the token introspection and publish the event on introspection error.
      *
-     * @param
+     * @param introspectionRequest OAuth2 token validation request object.
+     * @param introspectionResponse OAuth2 introspection response.
      */
     public static void triggerOnIntrospectionExceptionListeners(OAuth2TokenValidationRequestDTO introspectionRequest,
             OAuth2IntrospectionResponseDTO introspectionResponse) {
@@ -3033,8 +3034,7 @@ public class OAuth2Util {
         } catch (Throwable e) {
             // Catching a throwable as we do no need to interrupt the code flow since these are logging purposes.
             if (log.isDebugEnabled()) {
-                log.debug("Error occurred while executing oAuthEventInterceptorProxy for onTokenValidationException."
-                        , e);
+                log.debug("Error occurred while executing oAuthEventInterceptorProxy ", e);
             }
         }
     }
