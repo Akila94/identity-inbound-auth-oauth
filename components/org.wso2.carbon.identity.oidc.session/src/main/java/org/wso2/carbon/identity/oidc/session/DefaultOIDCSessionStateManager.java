@@ -19,6 +19,8 @@
 package org.wso2.carbon.identity.oidc.session;
 
 import org.apache.commons.codec.binary.Base64;
+import org.wso2.carbon.core.SameSiteCookie;
+import org.wso2.carbon.core.ServletCookie;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -65,9 +67,10 @@ public class DefaultOIDCSessionStateManager implements OIDCSessionStateManager {
      */
     public Cookie addOPBrowserStateCookie(HttpServletResponse response) {
 
-        Cookie cookie = new Cookie(OIDCSessionConstants.OPBS_COOKIE_ID, UUID.randomUUID().toString());
+        ServletCookie cookie = new ServletCookie(OIDCSessionConstants.OPBS_COOKIE_ID, UUID.randomUUID().toString());
         cookie.setSecure(true);
         cookie.setPath("/");
+        cookie.setSameSite(SameSiteCookie.NONE);
 
         response.addCookie(cookie);
         return cookie;
