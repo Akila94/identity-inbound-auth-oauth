@@ -398,7 +398,7 @@ public class OAuthServerConfiguration {
         // Read token introspection related configurations.
         parseTokenIntrospectionConfig(oauthElem);
 
-        // Read the property for error redirection URI
+        // Read the property for error redirection URI.
         parseRedirectToOAuthErrorPageConfig(oauthElem);
     }
 
@@ -985,7 +985,8 @@ public class OAuthServerConfiguration {
         return idTokenNotAllowedGrantTypesSet;
     }
 
-    public boolean isRedirectToRequestedRedirectUriEnabled(){
+    public boolean isRedirectToRequestedRedirectUriEnabled() {
+
         return redirectToRequestedRedirectUriEnabled;
     }
 
@@ -2606,7 +2607,9 @@ public class OAuthServerConfiguration {
             }
         }
     }
-    private void parseRedirectToOAuthErrorPageConfig(OMElement oauthConfigElem){
+
+    private void parseRedirectToOAuthErrorPageConfig(OMElement oauthConfigElem) {
+
         OMElement redirectToOAuthErrorPageElem =
                 oauthConfigElem.getFirstChildWithName(getQNameWithIdentityNS(ConfigElements
                         .REDIRECT_TO_REQUESTED_REDIRECT_URI));

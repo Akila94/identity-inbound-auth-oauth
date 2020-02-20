@@ -340,8 +340,8 @@ public class OAuth2AuthzEndpoint {
 
             if (redirectURI != null) {
                 try {
-                    errorPageURL = errorPageURL + "&" + REDIRECT_URI + "=" + URLEncoder
-                            .encode(redirectURI, StandardCharsets.UTF_8.name());
+                    errorPageURL = FrameworkUtils.appendQueryParamsStringToUrl(errorPageURL, REDIRECT_URI + "=" +
+                            URLEncoder.encode(redirectURI, StandardCharsets.UTF_8.name()));
                 } catch (UnsupportedEncodingException e1) {
                     if (log.isDebugEnabled()) {
                         log.debug("Error while encoding the error page url", e);

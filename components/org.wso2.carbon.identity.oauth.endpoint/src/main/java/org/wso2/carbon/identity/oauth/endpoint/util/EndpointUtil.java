@@ -351,6 +351,7 @@ public class EndpointUtil {
      */
     public static String getErrorPageURL(HttpServletRequest request, String errorCode, String subErrorCode, String
             errorMessage, String appName) {
+
         // By default RedirectToRequestedRedirectUri property is set to true. Therefore by default error page
         // is returned to the uri given in the request.
         // For the backward compatibility, this property can be set to false and then the error page is
@@ -364,14 +365,15 @@ public class EndpointUtil {
             String redirectUri = request.getParameter(OAuthConstants.OAuth20Params.REDIRECT_URI);
             String state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
             try {
-                redirectUri += "?" + PROP_ERROR + "=" + URLEncoder.encode(errorCode, "UTF-8") +
-                        "&" + PROP_ERROR_DESCRIPTION + "=" + URLEncoder.encode(errorMessage, "UTF-8");
+                redirectUri = FrameworkUtils.appendQueryParamsStringToUrl(redirectUri,
+                        PROP_ERROR + "=" + URLEncoder.encode(errorCode, "UTF-8") +
+                                "&" + PROP_ERROR_DESCRIPTION + "=" + URLEncoder.encode(errorMessage, "UTF-8"));
 
                 if (state != null) {
                     redirectUri += "&" + OAuthConstants.OAuth20Params.STATE + "=" + state;
                 }
             } catch (UnsupportedEncodingException e) {
-                //ignore
+                // Ignore.
                 if (log.isDebugEnabled()) {
                     log.debug("Error while encoding the error page url", e);
                 }
