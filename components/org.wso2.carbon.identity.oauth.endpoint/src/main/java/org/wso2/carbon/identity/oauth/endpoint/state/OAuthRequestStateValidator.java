@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.oauth.endpoint.state;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.oauth.common.OAuth2ErrorCodes;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.endpoint.OAuthRequestWrapper;
 import org.wso2.carbon.identity.oauth.endpoint.exception.AccessDeniedException;
@@ -92,7 +93,8 @@ public class OAuthRequestStateValidator {
                 log.debug("Invalid authorization request.\'SessionDataKey\' not found in request as parameter or " +
                         "attribute, and client_id parameter cannot be found in request");
             }
-            throw new InvalidRequestException("Invalid authorization request");
+            throw new InvalidRequestException("Invalid authorization request", OAuth2ErrorCodes.OAuth2SubErrorCodes
+                    .INVALID_CLIENT);
 
         } else if (oAuthMessage.getSessionDataKeyFromLogin() != null && oAuthMessage.getResultFromLogin() == null) {
 
