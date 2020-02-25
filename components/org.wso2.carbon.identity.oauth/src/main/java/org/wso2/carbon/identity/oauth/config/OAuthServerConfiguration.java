@@ -141,7 +141,7 @@ public class OAuthServerConfiguration {
     private boolean isRefreshTokenRenewalEnabled = true;
     private boolean assertionsUserNameEnabled = false;
     private boolean accessTokenPartitioningEnabled = false;
-    private boolean redirectToRequestedRedirectUriEnabled = true;
+    private boolean redirectToRequestedRedirectUriEnabled = false;
     private String accessTokenPartitioningDomains = null;
     private TokenPersistenceProcessor persistenceProcessor = null;
     private Set<OAuthCallbackHandlerMetaData> callbackHandlerMetaData = new HashSet<>();
