@@ -495,7 +495,7 @@ public abstract class AbstractAuthorizationGrantHandler implements Authorization
 
         if (validityPeriodFromMsgContext != OAuthConstants.UNASSIGNED_VALIDITY_PERIOD
                 && validityPeriodFromMsgContext > 0) {
-            refreshTokenValidityPeriodInMillis = tokReqMsgCtx.getRefreshTokenvalidityPeriod() *
+            refreshTokenValidityPeriodInMillis = validityPeriodFromMsgContext *
                     SECONDS_TO_MILISECONDS_FACTOR;
             if (log.isDebugEnabled()) {
                 log.debug("OAuth application id : " + oAuthAppBean.getOauthConsumerKey() + ", using refresh token " +
