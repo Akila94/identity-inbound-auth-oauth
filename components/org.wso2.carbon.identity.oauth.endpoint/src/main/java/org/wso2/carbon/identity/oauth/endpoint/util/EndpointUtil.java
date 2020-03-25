@@ -365,14 +365,13 @@ public class EndpointUtil {
             String redirectUri = request.getParameter(OAuthConstants.OAuth20Params.REDIRECT_URI);
             String state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
             try {
-                redirectUri = FrameworkUtils.appendQueryParamsStringToUrl(redirectUri,
-                        PROP_ERROR + "=" + URLEncoder.encode(errorCode, "UTF-8") +
-                                "&" + PROP_ERROR_DESCRIPTION + "=" + URLEncoder.encode(errorMessage, "UTF-8"));
+                OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
 
-                if (state != null) {
-                    redirectUri += "&" + OAuthConstants.OAuth20Params.STATE + "=" + state;
-                }
-            } catch (UnsupportedEncodingException e) {
+                redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
+                        .error(ex).location(redirectUri).setState(state).setParam(OAuth.OAUTH_ACCESS_TOKEN, null)
+                        .buildQueryMessage().getLocationUri();
+
+            } catch (OAuthSystemException e) {
                 // Ignore.
                 if (log.isDebugEnabled()) {
                     log.debug("Error while encoding the error page url", e);
