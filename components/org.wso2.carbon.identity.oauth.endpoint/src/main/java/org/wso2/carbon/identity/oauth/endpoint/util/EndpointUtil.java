@@ -372,10 +372,7 @@ public class EndpointUtil {
                         .buildQueryMessage().getLocationUri();
 
             } catch (OAuthSystemException e) {
-                // Ignore.
-                if (log.isDebugEnabled()) {
-                    log.debug("Error while encoding the error page url", e);
-                }
+                log.error("Server error occurred while building error redirect url", e);
             }
             return redirectUri;
         }
