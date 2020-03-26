@@ -367,9 +367,15 @@ public class EndpointUtil {
             try {
                 OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
 
-                redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
-                        .error(ex).location(redirectUri).setState(state).setParam(OAuth.OAUTH_ACCESS_TOKEN, null)
-                        .buildQueryMessage().getLocationUri();
+                if (OAuth2Util.isImplicitResponseType(request.getParameter(OAuthConstants.OAuth20Params.SCOPE)) ||
+                        OAuth2Util.isHybridResponseType(request.getParameter(OAuthConstants.OAuth20Params.SCOPE))) {
+                    redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
+                            .error(ex).location(redirectUri).setState(state).setParam(OAuth.OAUTH_ACCESS_TOKEN, null)
+                            .buildQueryMessage().getLocationUri();
+                } else {
+                    redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
+                            .error(ex).location(redirectUri).setState(state).buildQueryMessage().getLocationUri();
+                }
 
             } catch (OAuthSystemException e) {
                 log.error("Server error occurred while building error redirect url", e);
