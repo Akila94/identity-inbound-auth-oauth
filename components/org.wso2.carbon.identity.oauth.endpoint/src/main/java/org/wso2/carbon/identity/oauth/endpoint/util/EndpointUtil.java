@@ -378,7 +378,7 @@ public class EndpointUtil {
                 }
 
             } catch (OAuthSystemException e) {
-                log.error("Server error occurred while building error redirect url", e);
+                log.error("Server error occurred while building error redirect url for application: " + appName, e);
             }
             return redirectUri;
         }
