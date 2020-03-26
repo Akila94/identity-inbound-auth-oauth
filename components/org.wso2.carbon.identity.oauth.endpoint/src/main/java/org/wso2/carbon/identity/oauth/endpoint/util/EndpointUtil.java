@@ -366,7 +366,6 @@ public class EndpointUtil {
             String state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
             try {
                 OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
-
                 if (OAuth2Util.isImplicitResponseType(request.getParameter(OAuthConstants.OAuth20Params.RESPONSE_TYPE))
                         || OAuth2Util.isHybridResponseType(request.getParameter(OAuthConstants.OAuth20Params.
                         RESPONSE_TYPE))) {
