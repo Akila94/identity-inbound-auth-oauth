@@ -365,18 +365,20 @@ public class EndpointUtil {
             String redirectUri = request.getParameter(OAuthConstants.OAuth20Params.REDIRECT_URI);
             String state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
             try {
-                redirectUri = FrameworkUtils.appendQueryParamsStringToUrl(redirectUri,
-                        PROP_ERROR + "=" + URLEncoder.encode(errorCode, "UTF-8") +
-                                "&" + PROP_ERROR_DESCRIPTION + "=" + URLEncoder.encode(errorMessage, "UTF-8"));
+                OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
+                if (OAuth2Util.isImplicitResponseType(request.getParameter(OAuthConstants.OAuth20Params.RESPONSE_TYPE))
+                        || OAuth2Util.isHybridResponseType(request.getParameter(OAuthConstants.OAuth20Params.
+                        RESPONSE_TYPE))) {
+                    redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
+                            .error(ex).location(redirectUri).setState(state).setParam(OAuth.OAUTH_ACCESS_TOKEN, null)
+                            .buildQueryMessage().getLocationUri();
+                } else {
+                    redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
+                            .error(ex).location(redirectUri).setState(state).buildQueryMessage().getLocationUri();
+                }
 
-                if (state != null) {
-                    redirectUri += "&" + OAuthConstants.OAuth20Params.STATE + "=" + state;
-                }
-            } catch (UnsupportedEncodingException e) {
-                // Ignore.
-                if (log.isDebugEnabled()) {
-                    log.debug("Error while encoding the error page url", e);
-                }
+            } catch (OAuthSystemException e) {
+                log.error("Server error occurred while building error redirect url for application: " + appName, e);
             }
             return redirectUri;
         }
