@@ -363,6 +363,10 @@ public class EndpointUtil {
             return getErrorPageURL(request, errorCode, errorMessage, appName);
         } else {
             String redirectUri = request.getParameter(OAuthConstants.OAuth20Params.REDIRECT_URI);
+            //if the redirect url is not set in the request, page is redirected to common OAuth error page.
+            if (redirectUri == null) {
+                redirectUri = getErrorPageURL(request, errorCode, errorMessage, appName);
+            }
             String state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
             try {
                 OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
