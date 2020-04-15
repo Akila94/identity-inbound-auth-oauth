@@ -28,7 +28,9 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.application.authentication.framework.AuthenticationDataPublisher;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticationMethodNameTranslator;
+import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.application.mgt.listener.ApplicationMgtListener;
 import org.wso2.carbon.identity.base.IdentityRuntimeException;
@@ -321,5 +323,26 @@ public class OAuth2ServiceComponent {
             log.debug("UnSetting the Registry Service");
         }
         OAuth2ServiceComponentHolder.getAuthenticationHandlers().remove(oAuthClientAuthenticator);
+    }
+
+    @Reference(
+            name = "framework.authentication.data.publisher",
+            service = AuthenticationDataPublisher.class,
+            cardinality = ReferenceCardinality.MULTIPLE,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetAuthenticationDataPublisher"
+    )
+    protected void setAuthenticationDataPublisher(AuthenticationDataPublisher dataPublisher) {
+        if (FrameworkConstants.AnalyticsAttributes.AUTHN_DATA_PUBLISHER_PROXY.equalsIgnoreCase(dataPublisher.
+                getName()) && dataPublisher.isEnabled(null)) {
+            OAuth2ServiceComponentHolder.setAuthenticationDataPublisherProxy(dataPublisher);
+        }
+    }
+
+    protected void unsetAuthenticationDataPublisher(AuthenticationDataPublisher dataPublisher) {
+        if (FrameworkConstants.AnalyticsAttributes.AUTHN_DATA_PUBLISHER_PROXY.equalsIgnoreCase(dataPublisher.
+                getName()) && dataPublisher.isEnabled(null)) {
+            OAuth2ServiceComponentHolder.setAuthenticationDataPublisherProxy(null);
+        }
     }
 }
