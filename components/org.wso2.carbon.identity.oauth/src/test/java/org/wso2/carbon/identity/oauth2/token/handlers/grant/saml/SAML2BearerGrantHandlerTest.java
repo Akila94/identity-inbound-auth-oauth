@@ -413,6 +413,7 @@ public class SAML2BearerGrantHandlerTest extends PowerMockIdentityBaseTest {
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setIdentityProviderName(name);
         identityProvider.setAlias(alias);
+        identityProvider.setCertificate("[{\"thumbPrint\":\"\",\"certValue\":\"\"}]");
         return identityProvider;
     }
 

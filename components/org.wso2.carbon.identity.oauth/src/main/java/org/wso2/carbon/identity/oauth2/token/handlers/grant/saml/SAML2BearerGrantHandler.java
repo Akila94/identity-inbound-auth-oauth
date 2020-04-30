@@ -48,6 +48,7 @@ import org.wso2.carbon.identity.application.authentication.framework.model.Authe
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.model.CertificateInfo;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.FederatedAuthenticatorConfig;
 import org.wso2.carbon.identity.application.common.model.IdentityProvider;
@@ -542,25 +543,64 @@ public class SAML2BearerGrantHandler extends AbstractAuthorizationGrantHandler {
 
     protected void validateSignatureAgainstIdpCertificate(Assertion assertion, String tenantDomain,
                                                         IdentityProvider identityProvider) throws IdentityOAuth2Exception {
-        X509Certificate x509Certificate = getIdpCertificate(tenantDomain, identityProvider);
-        try {
+
+        boolean isExceptionThrown = false;
+        ValidationException validationException = null;
+
+        CertificateInfo[] certificateInfos = identityProvider.getCertificateInfoArray();
+        if (log.isDebugEnabled()) {
+            log.debug(certificateInfos.length + " certificates found for Identity Provider " +
+                    identityProvider.getIdentityProviderName());
+        }
+
+        if (ArrayUtils.isEmpty(certificateInfos)) {
+            // Preserving the old behaviour of throwing an exception if there was no certificate available
+            // when signature validation was done only for one certificate.
+            throw new IdentityOAuth2Exception("No certificates found for Identity Provider "
+                    + identityProvider.getIdentityProviderName() + " of tenant domain " + tenantDomain);
+        }
+
+        int index = 0;
+        for (CertificateInfo certificateInfo : certificateInfos) {
+            X509Certificate x509Certificate = getIdpCertificate(tenantDomain, identityProvider, certificateInfo);
             X509Credential x509Credential = new X509CredentialImpl(x509Certificate);
             SignatureValidator signatureValidator = new SignatureValidator(x509Credential);
-            signatureValidator.validate(assertion.getSignature());
-        } catch (ValidationException e) {
-            throw new IdentityOAuth2Exception("Error while validating the signature.", e);
+
+            try {
+                if (log.isDebugEnabled()) {
+                    log.debug("Validating the signature with certificate " + certificateInfo.getThumbPrint() + " at " +
+                            "index: " + index);
+                }
+                signatureValidator.validate(assertion.getSignature());
+                isExceptionThrown = false;
+                break;
+            } catch (ValidationException e) {
+                isExceptionThrown = true;
+                if (validationException == null) {
+                    validationException = e;
+                } else {
+                    validationException.addSuppressed(e);
+                }
+            }
+            index++;
+        }
+        // If all the certification validation fails, then throw the exception.
+        if (isExceptionThrown) {
+            throw new IdentityOAuth2Exception("Error while validating the signature.", validationException);
         }
     }
 
-    private X509Certificate getIdpCertificate(String tenantDomain, IdentityProvider identityProvider)
-            throws IdentityOAuth2Exception {
+    private X509Certificate getIdpCertificate(String tenantDomain, IdentityProvider identityProvider,
+                                              CertificateInfo certificateInfo) throws IdentityOAuth2Exception {
+
         X509Certificate x509Certificate;
         try {
             x509Certificate = (X509Certificate) IdentityApplicationManagementUtil
-                    .decodeCertificate(identityProvider.getCertificate());
+                    .decodeCertificate(certificateInfo.getCertValue());
         } catch (CertificateException e) {
-            throw new IdentityOAuth2Exception("Error occurred while decoding public certificate of Identity Provider "
-                    + identityProvider.getIdentityProviderName() + " for tenant domain " + tenantDomain, e);
+            throw new IdentityOAuth2Exception("Error occurred while decoding public certificate with thumbprint " +
+                    certificateInfo.getThumbPrint() + " of Identity Provider " +
+                    identityProvider.getIdentityProviderName() + " for tenant domain " + tenantDomain, e);
         }
         return x509Certificate;
     }
