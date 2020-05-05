@@ -17,6 +17,8 @@
  */
 package org.wso2.carbon.identity.oauth.endpoint.util;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import org.apache.axiom.util.base64.Base64Utils;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.lang.StringUtils;
@@ -68,6 +70,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -342,15 +345,16 @@ public class EndpointUtil {
      * inform the resource owner of the error and MUST NOT automatically redirect the user-agent to the invalid
      * redirection URI.
      *
-     * @param request      HttpServletRequest
-     * @param errorCode    Error Code
-     * @param subErrorCode Sub error code to identify the exact reason for invalid request
-     * @param errorMessage Message of the error
-     * @param appName      Application Name
+     * @param request          HttpServletRequest
+     * @param errorCode        Error Code
+     * @param subErrorCode     Sub error code to identify the exact reason for invalid request
+     * @param errorMessage     Message of the error
+     * @param appName          Application Name
+     * @param oAuth2Parameters Application Name
      * @return url of the redirect error page
      */
     public static String getErrorPageURL(HttpServletRequest request, String errorCode, String subErrorCode, String
-            errorMessage, String appName) {
+            errorMessage, String appName, OAuth2Parameters oAuth2Parameters) {
 
         // By default RedirectToRequestedRedirectUri property is set to true. Therefore by default error page
         // is returned to the uri given in the request.
@@ -367,7 +371,7 @@ public class EndpointUtil {
             if (StringUtils.isBlank(redirectUri)) {
                 redirectUri = getErrorPageURL(request, errorCode, errorMessage, appName);
             }
-            String state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
+            String state = retrieveStateForErrorURL(request, oAuth2Parameters);
             try {
                 OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
                 if (OAuth2Util.isImplicitResponseType(request.getParameter(OAuthConstants.OAuth20Params.RESPONSE_TYPE))
@@ -847,5 +851,38 @@ public class EndpointUtil {
         if (isNotBlank(name) && isNotBlank(value)) {
             map.put(name, value);
         }
+    }
+
+    /**
+     * This method retrieve the state to append to the error page URL.
+     * If the state is available in OAuth2Parameters it will retrieve state from OAuth2Parameters.
+     * If the state is not available in OAuth2Parameters, then the state will be retrieved from request object.
+     * If the state is not available in OAuth2Parameters and request object then state will be retrieved from query params
+     *
+     * @param request
+     * @param oAuth2Parameters
+     * @return state
+     */
+    private static String retrieveStateForErrorURL(HttpServletRequest request, OAuth2Parameters oAuth2Parameters) {
+        String state = null;
+        try {
+            if (oAuth2Parameters.getState() != null) {
+                state = oAuth2Parameters.getState();
+            } else {
+                JWTClaimsSet jwtClaimsSet = SignedJWT.parse(request.getParameter(OAuthConstants.OAuth20Params.REQUEST))
+                        .getJWTClaimsSet();
+                if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
+                    state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
+                } else {
+                    if (request.getParameter(OAuthConstants.OAuth20Params.STATE) != null) {
+                        state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
+                    }
+                }
+            }
+        } catch (ParseException e) {
+            log.error("Error occurred while parsing the signed message", e);
+        }
+
+        return state;
     }
 }
