@@ -350,7 +350,7 @@ public class EndpointUtil {
      * @param subErrorCode     Sub error code to identify the exact reason for invalid request
      * @param errorMessage     Message of the error
      * @param appName          Application Name
-     * @param oAuth2Parameters Application Name
+     * @param oAuth2Parameters OAuth2Parameters
      * @return url of the redirect error page
      */
     public static String getErrorPageURL(HttpServletRequest request, String errorCode, String subErrorCode, String
