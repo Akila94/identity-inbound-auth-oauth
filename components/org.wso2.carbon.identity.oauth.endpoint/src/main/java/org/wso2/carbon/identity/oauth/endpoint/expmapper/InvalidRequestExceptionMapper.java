@@ -37,7 +37,6 @@ import org.wso2.carbon.identity.oauth.endpoint.exception.RevokeEndpointBadReques
 import org.wso2.carbon.identity.oauth.endpoint.exception.TokenEndpointAccessDeniedException;
 import org.wso2.carbon.identity.oauth.endpoint.exception.TokenEndpointBadRequestException;
 import org.wso2.carbon.identity.oauth.endpoint.util.EndpointUtil;
-import org.wso2.carbon.identity.oauth2.model.OAuth2Parameters;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -170,8 +169,7 @@ public class InvalidRequestExceptionMapper implements ExceptionMapper<InvalidReq
         }
         return Response.status(HttpServletResponse.SC_FOUND).location(new URI(
                 EndpointUtil.getErrorPageURL(request, OAuth2ErrorCodes.SERVER_ERROR, OAuth2ErrorCodes
-                        .OAuth2SubErrorCodes.CONSENT_DENIED, "Error while handling consent.",
-                        null))).build();
+                        .OAuth2SubErrorCodes.CONSENT_DENIED, "Error while handling consent.", null))).build();
     }
 
     private Response buildErrorResponse(int status, InvalidRequestParentException exception, String errorCode)
