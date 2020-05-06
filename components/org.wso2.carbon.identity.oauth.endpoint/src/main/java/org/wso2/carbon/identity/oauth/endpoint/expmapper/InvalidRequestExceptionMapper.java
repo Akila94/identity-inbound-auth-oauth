@@ -159,7 +159,7 @@ public class InvalidRequestExceptionMapper implements ExceptionMapper<InvalidReq
             log.debug("Response status :" + status);
         }
         return Response.status(status).location(new URI(EndpointUtil.getErrorPageURL(request, errorCode, subErrorCode,
-                exception.getMessage(), null, new OAuth2Parameters()))).build();
+                exception.getMessage(), null))).build();
     }
 
     private Response buildErrorResponseConsentHandlingFailure(InvalidRequestParentException exception)
@@ -171,7 +171,7 @@ public class InvalidRequestExceptionMapper implements ExceptionMapper<InvalidReq
         return Response.status(HttpServletResponse.SC_FOUND).location(new URI(
                 EndpointUtil.getErrorPageURL(request, OAuth2ErrorCodes.SERVER_ERROR, OAuth2ErrorCodes
                         .OAuth2SubErrorCodes.CONSENT_DENIED, "Error while handling consent.",
-                        null, new OAuth2Parameters()))).build();
+                        null))).build();
     }
 
     private Response buildErrorResponse(int status, InvalidRequestParentException exception, String errorCode)

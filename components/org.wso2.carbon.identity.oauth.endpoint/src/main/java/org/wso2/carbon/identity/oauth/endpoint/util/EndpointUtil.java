@@ -28,6 +28,7 @@ import org.apache.oltu.oauth2.as.response.OAuthASResponse;
 import org.apache.oltu.oauth2.common.OAuth;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
+import org.opensaml.xml.signature.J;
 import org.owasp.encoder.Encode;
 import org.wso2.carbon.base.ServerConfiguration;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -350,6 +351,63 @@ public class EndpointUtil {
      * @param subErrorCode     Sub error code to identify the exact reason for invalid request
      * @param errorMessage     Message of the error
      * @param appName          Application Name
+     * @return url of the redirect error page
+     */
+    public static String getErrorPageURL(HttpServletRequest request, String errorCode, String subErrorCode, String
+            errorMessage, String appName) {
+
+        // By default RedirectToRequestedRedirectUri property is set to true. Therefore by default error page
+        // is returned to the uri given in the request.
+        // For the backward compatibility, this property can be set to false and then the error page is
+        // redirected to a common OAuth Error page.
+        if (!OAuthServerConfiguration.getInstance().isRedirectToRequestedRedirectUriEnabled()) {
+            return getErrorPageURL(request, errorCode, errorMessage, appName);
+        } else if (subErrorCode.equals(OAuth2ErrorCodes.OAuth2SubErrorCodes.INVALID_REDIRECT_URI) || subErrorCode
+                .equals(OAuth2ErrorCodes.OAuth2SubErrorCodes.INVALID_CLIENT)) {
+            return getErrorPageURL(request, errorCode, errorMessage, appName);
+        } else {
+            String redirectUri = request.getParameter(OAuthConstants.OAuth20Params.REDIRECT_URI);
+            // If the redirect url is not set in the request, page is redirected to common OAuth error page.
+            if (StringUtils.isBlank(redirectUri)) {
+                redirectUri = getErrorPageURL(request, errorCode, errorMessage, appName);
+            }
+            String state = null;
+            try {
+                JWTClaimsSet jwtClaimsSet = SignedJWT.parse(request.getParameter(OAuthConstants.OAuth20Params.REQUEST))
+                        .getJWTClaimsSet();
+                if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
+                    state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
+                } else {
+                    if (request.getParameter(OAuthConstants.OAuth20Params.STATE) != null) {
+                        state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
+                    }
+                }
+            } catch (ParseException e) {
+                log.error("Error occurred while parsing the signed message", e);
+            }
+            redirectUri = getUpdatedRedirectURL(request, errorCode,errorMessage, state, appName);
+            return redirectUri;
+        }
+
+    }
+
+    /**
+     * Returns the error page URL.
+     * If RedirectToRequestedRedirectUri property is true and if the resource owner denies the access request or if the
+     * request fails for reasons other than a missing or invalid redirection URI, the authorization server informs
+     * the client by adding the error code, error message and state parameters to the query component of the
+     * redirection URI.
+     * <p>
+     * If RedirectToRequestedRedirectUri property is false OR if the request fails due to a missing, invalid, or
+     * mismatching redirection URI, or if the client identifier is missing or invalid, the authorization server SHOULD
+     * inform the resource owner of the error and MUST NOT automatically redirect the user-agent to the invalid
+     * redirection URI.
+     *
+     * @param request          HttpServletRequest
+     * @param errorCode        Error Code
+     * @param subErrorCode     Sub error code to identify the exact reason for invalid request
+     * @param errorMessage     Message of the error
+     * @param appName          Application Name
      * @param oAuth2Parameters OAuth2Parameters
      * @return url of the redirect error page
      */
@@ -372,22 +430,7 @@ public class EndpointUtil {
                 redirectUri = getErrorPageURL(request, errorCode, errorMessage, appName);
             }
             String state = retrieveStateForErrorURL(request, oAuth2Parameters);
-            try {
-                OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
-                if (OAuth2Util.isImplicitResponseType(request.getParameter(OAuthConstants.OAuth20Params.RESPONSE_TYPE))
-                        || OAuth2Util.isHybridResponseType(request.getParameter(OAuthConstants.OAuth20Params.
-                        RESPONSE_TYPE))) {
-                    redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
-                            .error(ex).location(redirectUri).setState(state).setParam(OAuth.OAUTH_ACCESS_TOKEN, null)
-                            .buildQueryMessage().getLocationUri();
-                } else {
-                    redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
-                            .error(ex).location(redirectUri).setState(state).buildQueryMessage().getLocationUri();
-                }
-
-            } catch (OAuthSystemException e) {
-                log.error("Server error occurred while building error redirect url for application: " + appName, e);
-            }
+            redirectUri = getUpdatedRedirectURL(request, errorCode,errorMessage, state, appName);
             return redirectUri;
         }
 
@@ -884,5 +927,37 @@ public class EndpointUtil {
         }
 
         return state;
+    }
+
+    /**
+     * Return updated redirect URL
+     *
+     * @param request       HttpServletRequest
+     * @param errorCode     Error Code
+     * @param errorMessage  Message of the error
+     * @param state         State from the request
+     * @param appName       Application Name
+     * @return Updated Redirect URL
+     */
+    private static String getUpdatedRedirectURL(HttpServletRequest request, String errorCode, String errorMessage,
+                                                String state, String appName) {
+        String redirectUri = null;
+        try {
+            OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
+            if (OAuth2Util.isImplicitResponseType(request.getParameter(OAuthConstants.OAuth20Params.RESPONSE_TYPE))
+                    || OAuth2Util.isHybridResponseType(request.getParameter(OAuthConstants.OAuth20Params.
+                    RESPONSE_TYPE))) {
+                redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
+                        .error(ex).location(redirectUri).setState(state).setParam(OAuth.OAUTH_ACCESS_TOKEN, null)
+                        .buildQueryMessage().getLocationUri();
+            } else {
+                redirectUri = OAuthASResponse.errorResponse(HttpServletResponse.SC_FOUND)
+                        .error(ex).location(redirectUri).setState(state).buildQueryMessage().getLocationUri();
+            }
+
+        } catch (OAuthSystemException e) {
+            log.error("Server error occurred while building error redirect url for application: " + appName, e);
+        }
+        return redirectUri;
     }
 }
