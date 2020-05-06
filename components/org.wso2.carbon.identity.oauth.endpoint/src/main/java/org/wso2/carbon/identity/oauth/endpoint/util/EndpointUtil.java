@@ -377,10 +377,6 @@ public class EndpointUtil {
                             .getJWTClaimsSet();
                     if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
                         state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
-                    } else {
-                        if (request.getParameter(OAuthConstants.OAuth20Params.STATE) != null) {
-                            state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
-                        }
                     }
                 } catch (ParseException e) {
                     log.error("Error occurred while parsing the signed message", e);
@@ -918,10 +914,6 @@ public class EndpointUtil {
                         .getJWTClaimsSet();
                 if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
                     state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
-                } else {
-                    if (request.getParameter(OAuthConstants.OAuth20Params.STATE) != null) {
-                        state = request.getParameter(OAuthConstants.OAuth20Params.STATE);
-                    }
                 }
             }
         } catch (ParseException e) {
