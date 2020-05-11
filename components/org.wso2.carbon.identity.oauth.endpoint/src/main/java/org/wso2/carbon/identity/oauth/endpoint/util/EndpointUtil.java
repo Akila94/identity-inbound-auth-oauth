@@ -880,11 +880,17 @@ public class EndpointUtil {
         String state = null;
         try {
             if (oAuth2Parameters.getState() != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Retrieved state from OAuth2Parameters");
+                }
                 state = oAuth2Parameters.getState();
             } else {
                 JWTClaimsSet jwtClaimsSet = SignedJWT.parse(request.getParameter(OAuthConstants.OAuth20Params.REQUEST))
                         .getJWTClaimsSet();
                 if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Retrieved state from request object");
+                    }
                     state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
                 }
             }
@@ -896,7 +902,7 @@ public class EndpointUtil {
     }
 
     /**
-     * Return updated redirect URL
+     * Return updated redirect URL.
      *
      * @param request       HttpServletRequest
      * @param redirectUri   Redirect Uri
