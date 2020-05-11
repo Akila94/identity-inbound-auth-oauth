@@ -890,7 +890,7 @@ public class EndpointUtil {
                 if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
                     state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
                     if (log.isDebugEnabled()) {
-                        log.debug("Retrieved state value " + state + " from request object ");
+                        log.debug("Retrieved state value " + state + " from request object.");
                     }
                 }
             }
