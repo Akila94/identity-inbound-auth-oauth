@@ -876,6 +876,7 @@ public class EndpointUtil {
      * @return state
      */
     private static String retrieveStateForErrorURL(HttpServletRequest request, OAuth2Parameters oAuth2Parameters) {
+
         String state = null;
         try {
             if (oAuth2Parameters.getState() != null) {
@@ -907,6 +908,7 @@ public class EndpointUtil {
      */
     private static String getUpdatedRedirectURL(HttpServletRequest request, String redirectUri, String errorCode,
                                                 String errorMessage, String state, String appName) {
+
         String updatedRedirectUri = null;
         try {
             OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
