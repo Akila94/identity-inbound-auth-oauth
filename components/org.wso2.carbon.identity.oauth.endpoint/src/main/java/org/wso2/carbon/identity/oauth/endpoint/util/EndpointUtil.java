@@ -915,7 +915,7 @@ public class EndpointUtil {
     private static String getUpdatedRedirectURL(HttpServletRequest request, String redirectUri, String errorCode,
                                                 String errorMessage, String state, String appName) {
 
-        String updatedRedirectUri = null;
+        String updatedRedirectUri = redirectUri;
         try {
             OAuthProblemException ex = OAuthProblemException.error(errorCode).description(errorMessage);
             if (OAuth2Util.isImplicitResponseType(request.getParameter(OAuthConstants.OAuth20Params.RESPONSE_TYPE))
