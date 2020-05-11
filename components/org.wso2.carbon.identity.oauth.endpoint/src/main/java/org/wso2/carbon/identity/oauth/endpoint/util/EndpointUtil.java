@@ -881,7 +881,7 @@ public class EndpointUtil {
         try {
             if (oAuth2Parameters.getState() != null) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Retrieved state from OAuth2Parameters");
+                    log.debug("Retrieved state from OAuth2Parameters.");
                 }
                 state = oAuth2Parameters.getState();
             } else {
@@ -889,7 +889,7 @@ public class EndpointUtil {
                         .getJWTClaimsSet();
                 if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Retrieved state from request object");
+                        log.debug("Retrieved state from request object.");
                     }
                     state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
                 }
