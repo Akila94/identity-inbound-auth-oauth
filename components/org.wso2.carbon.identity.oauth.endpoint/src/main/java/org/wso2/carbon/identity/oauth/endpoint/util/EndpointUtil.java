@@ -28,7 +28,6 @@ import org.apache.oltu.oauth2.as.response.OAuthASResponse;
 import org.apache.oltu.oauth2.common.OAuth;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-import org.opensaml.xml.signature.J;
 import org.owasp.encoder.Encode;
 import org.wso2.carbon.base.ServerConfiguration;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -356,35 +355,7 @@ public class EndpointUtil {
     public static String getErrorPageURL(HttpServletRequest request, String errorCode, String subErrorCode, String
             errorMessage, String appName) {
 
-        // By default RedirectToRequestedRedirectUri property is set to true. Therefore by default error page
-        // is returned to the uri given in the request.
-        // For the backward compatibility, this property can be set to false and then the error page is
-        // redirected to a common OAuth Error page.
-        if (!OAuthServerConfiguration.getInstance().isRedirectToRequestedRedirectUriEnabled()) {
-            return getErrorPageURL(request, errorCode, errorMessage, appName);
-        } else if (subErrorCode.equals(OAuth2ErrorCodes.OAuth2SubErrorCodes.INVALID_REDIRECT_URI) || subErrorCode
-                .equals(OAuth2ErrorCodes.OAuth2SubErrorCodes.INVALID_CLIENT)) {
-            return getErrorPageURL(request, errorCode, errorMessage, appName);
-        } else {
-            String redirectUri = request.getParameter(OAuthConstants.OAuth20Params.REDIRECT_URI);
-            // If the redirect url is not set in the request, page is redirected to common OAuth error page.
-            if (StringUtils.isBlank(redirectUri)) {
-                redirectUri = getErrorPageURL(request, errorCode, errorMessage, appName);
-            } else {
-                String state = null;
-                try {
-                    JWTClaimsSet jwtClaimsSet = SignedJWT.parse(request.getParameter(OAuthConstants.OAuth20Params.REQUEST))
-                            .getJWTClaimsSet();
-                    if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
-                        state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
-                    }
-                } catch (ParseException e) {
-                    log.error("Error occurred while parsing the signed message", e);
-                }
-                redirectUri = getUpdatedRedirectURL(request, redirectUri, errorCode, errorMessage, state, appName);
-            }
-            return redirectUri;
-        }
+        return getErrorPageURL(request, errorCode, subErrorCode, errorMessage, appName, new OAuth2Parameters());
 
     }
 
