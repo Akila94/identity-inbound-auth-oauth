@@ -2679,7 +2679,7 @@ public class OAuth2AuthzEndpoint {
     }
 
     /**
-     * Return OAuth2Parameters retrieved from OAuthMessage
+     * Return OAuth2Parameters retrieved from OAuthMessage.
      * @param oAuthMessage
      * @return OAuth2Parameters
      */
