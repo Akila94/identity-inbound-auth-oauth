@@ -880,18 +880,18 @@ public class EndpointUtil {
         String state = null;
         try {
             if (oAuth2Parameters.getState() != null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Retrieved state from OAuth2Parameters.");
-                }
                 state = oAuth2Parameters.getState();
+                if (log.isDebugEnabled()) {
+                    log.debug("Retrieved state value " + state + " from OAuth2Parameters.");
+                }
             } else {
                 JWTClaimsSet jwtClaimsSet = SignedJWT.parse(request.getParameter(OAuthConstants.OAuth20Params.REQUEST))
                         .getJWTClaimsSet();
                 if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Retrieved state from request object.");
-                    }
                     state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Retrieved state value " + state + " from request object ");
+                    }
                 }
             }
         } catch (ParseException e) {
