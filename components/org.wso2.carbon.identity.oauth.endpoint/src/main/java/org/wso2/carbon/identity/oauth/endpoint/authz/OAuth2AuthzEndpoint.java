@@ -330,6 +330,7 @@ public class OAuth2AuthzEndpoint {
     private Response handleOAuthProblemException(OAuthMessage oAuthMessage, OAuthProblemException e) throws
             URISyntaxException {
 
+
         if (log.isDebugEnabled()) {
             log.debug(e.getError(), e);
         }
@@ -607,6 +608,8 @@ public class OAuth2AuthzEndpoint {
         OpenIDConnectUserRPStore.getInstance().putUserRPToStore(getLoggedInUser(oAuthMessage),
                 getOauth2Params(oAuthMessage).getApplicationName(),
                 false, oauth2Params.getClientId());
+        oAuthMessage.getRequest().removeAttribute(REQUEST_PARAM_SP);
+        oAuthMessage.getRequest().removeAttribute(TENANT_DOMAIN);
         // return an error if user denied
         OAuthProblemException ex = OAuthProblemException.error(OAuth2ErrorCodes.ACCESS_DENIED,
                 "User denied the consent");
@@ -1018,6 +1021,8 @@ public class OAuth2AuthzEndpoint {
         sessionState.setAuthenticated(false);
         String errorCode = OAuth2ErrorCodes.SERVER_ERROR;
         String errorMsg = "Error occurred while processing the request";
+        oAuthMessage.getRequest().removeAttribute(REQUEST_PARAM_SP);
+        oAuthMessage.getRequest().removeAttribute(TENANT_DOMAIN);
         OAuthProblemException oauthProblemException = OAuthProblemException.error(
                 errorCode, errorMsg);
         return EndpointUtil.getErrorRedirectURL(oAuthMessage.getRequest(), oauthProblemException, oauth2Params);
@@ -1034,6 +1039,8 @@ public class OAuth2AuthzEndpoint {
         } else {
             errorMsg = "Error occurred while processing the request";
         }
+        oAuthMessage.getRequest().removeAttribute(REQUEST_PARAM_SP);
+        oAuthMessage.getRequest().removeAttribute(TENANT_DOMAIN);
         OAuthProblemException oauthProblemException = OAuthProblemException.error(
                 authzRespDTO.getErrorCode(), errorMsg);
         return EndpointUtil.getErrorRedirectURL(oAuthMessage.getRequest(), oauthProblemException, oauth2Params);
@@ -1370,6 +1377,8 @@ public class OAuth2AuthzEndpoint {
         if (log.isDebugEnabled()) {
             log.debug(message + " " + prompt);
         }
+        oAuthMessage.getRequest().removeAttribute(REQUEST_PARAM_SP);
+        oAuthMessage.getRequest().removeAttribute(TENANT_DOMAIN);
         OAuthProblemException ex = OAuthProblemException.error(OAuth2ErrorCodes.INVALID_REQUEST, message);
         return EndpointUtil.getErrorRedirectURL(oAuthMessage.getRequest(), ex, params);
     }
