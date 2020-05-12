@@ -330,7 +330,6 @@ public class OAuth2AuthzEndpoint {
     private Response handleOAuthProblemException(OAuthMessage oAuthMessage, OAuthProblemException e) throws
             URISyntaxException {
 
-
         if (log.isDebugEnabled()) {
             log.debug(e.getError(), e);
         }
