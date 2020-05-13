@@ -424,7 +424,7 @@ public class EndpointUtil {
             return redirectURL;
         }
         //As per the spec [https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.1.2.6] removing additional
-        //params to avoid them appending to the error URL when error iss redirected to Redirect URl
+        //params to avoid them appending to the error URL when error is redirected to Redirect URI
         if (params != null && StringUtils.isNotBlank(params.getRedirectURI())) {
             request.removeAttribute(REQUEST_PARAM_SP);
             request.removeAttribute(TENANT_DOMAIN);
