@@ -423,8 +423,10 @@ public class EndpointUtil {
         if (request == null) {
             return redirectURL;
         }
-        request.removeAttribute(REQUEST_PARAM_SP);
-        request.removeAttribute(TENANT_DOMAIN);
+        if (params != null && StringUtils.isNotBlank(params.getRedirectURI())) {
+            request.removeAttribute(REQUEST_PARAM_SP);
+            request.removeAttribute(TENANT_DOMAIN);
+        }
         return getRedirectURL(redirectURL, request);
     }
 
