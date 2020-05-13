@@ -82,6 +82,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MultivaluedMap;
 
 import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.REQUEST_PARAM_SP;
+import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.RequestParams.TENANT_DOMAIN;
 import static org.wso2.carbon.identity.oauth.common.OAuthConstants.HTTP_REQ_HEADER_AUTH_METHOD_BASIC;
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils.getRedirectURL;
 import static org.wso2.carbon.identity.oauth.common.OAuthConstants.OauthAppStates.APP_STATE_ACTIVE;
@@ -421,6 +423,8 @@ public class EndpointUtil {
         if (request == null) {
             return redirectURL;
         }
+        request.removeAttribute(REQUEST_PARAM_SP);
+        request.removeAttribute(TENANT_DOMAIN);
         return getRedirectURL(redirectURL, request);
     }
 
