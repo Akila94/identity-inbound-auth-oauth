@@ -103,6 +103,7 @@ public class EndpointUtil {
     private static final String PROP_REDIRECT_URI = "redirect_uri";
     private static final String NOT_AVAILABLE = "N/A";
     private static final String UNKNOWN_ERROR = "unknown_error";
+    private static final String ALLOW_ADDITIONAL_PARAMS_FROM_ERROR_URL = "OAuth.AllowAdditionalParamsFromErrorUrl";
 
     private EndpointUtil() {
 
@@ -421,7 +422,14 @@ public class EndpointUtil {
         if (request == null) {
             return redirectURL;
         }
-        return getRedirectURL(redirectURL, request);
+
+        if (isAllowAdditionalParamsFromErrorUrlEnabled() || isRedirectToCommonErrorPage(params, redirectURL)) {
+            // Appending additional parameters if the <AllowAdditionalParamsFromErrorUrl> config is enabled or
+            // the error is redirected to the common error page.
+            return getRedirectURL(redirectURL, request);
+        } else {
+            return redirectURL;
+        }
     }
 
     public static String getErrorRedirectURL(OAuthProblemException ex, OAuth2Parameters params) {
@@ -933,5 +941,37 @@ public class EndpointUtil {
             log.error("Server error occurred while building error redirect url for application: " + appName, e);
         }
         return updatedRedirectUri;
+    }
+
+    /**
+     * Method to retrieve the <AllowAdditionalParamsFromErrorUrl> config from the OAuth Configuration.
+     * @return Retrieved config (true or false)
+     */
+    private static boolean isAllowAdditionalParamsFromErrorUrlEnabled() {
+
+        String isAllowAdditionalParamsEnabled = IdentityUtil.getProperty(ALLOW_ADDITIONAL_PARAMS_FROM_ERROR_URL);
+
+        if (StringUtils.isNotBlank(isAllowAdditionalParamsEnabled)) {
+            return Boolean.parseBoolean(isAllowAdditionalParamsEnabled);
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Method to check whether the error is redirected to the common error page.
+     *
+     * @param params       OAuth2Parameters
+     * @param redirectURL  Constructed redirect URL
+     * @return Whether the error is redirected to the common error page (true or false)
+     */
+    private static boolean isRedirectToCommonErrorPage(OAuth2Parameters params, String redirectURL) {
+
+        // Verifying whether the error is redirecting to the redirect url by checking whether the constructed redirect
+        // url contains the redirect url from the request if the params from request is not null and params from
+        // request contains redirect url.
+        return !(params != null && StringUtils.isNotBlank(params.getRedirectURI()) &&
+                StringUtils.startsWith(redirectURL, params.getRedirectURI()));
+
     }
 }
