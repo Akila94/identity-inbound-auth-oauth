@@ -142,6 +142,7 @@ public class OAuthServerConfiguration {
     private boolean assertionsUserNameEnabled = false;
     private boolean accessTokenPartitioningEnabled = false;
     private boolean redirectToRequestedRedirectUriEnabled = false;
+    private boolean removeAdditionalParamsFromErrorUrl = false;
     private String accessTokenPartitioningDomains = null;
     private TokenPersistenceProcessor persistenceProcessor = null;
     private Set<OAuthCallbackHandlerMetaData> callbackHandlerMetaData = new HashSet<>();
@@ -400,6 +401,9 @@ public class OAuthServerConfiguration {
 
         // Read the property for error redirection URI.
         parseRedirectToOAuthErrorPageConfig(oauthElem);
+
+        // Read the property for removeing additional params from Error URL.
+        parseRemoveAdditionalParamsFromErrorUrlConfig(oauthElem);
     }
 
     private void parseTokenIntrospectionConfig(OMElement oauthElem) {
@@ -988,6 +992,11 @@ public class OAuthServerConfiguration {
     public boolean isRedirectToRequestedRedirectUriEnabled() {
 
         return redirectToRequestedRedirectUriEnabled;
+    }
+
+    public boolean isRemoveAdditionalParamsFromErrorUrlEnabled() {
+
+        return removeAdditionalParamsFromErrorUrl;
     }
 
     public boolean isUserNameAssertionEnabled() {
@@ -2623,6 +2632,22 @@ public class OAuthServerConfiguration {
         }
     }
 
+    private void parseRemoveAdditionalParamsFromErrorUrlConfig(OMElement oauthConfigElem) {
+
+        OMElement removeAdditionalParamsFromErrorUrlElem =
+                oauthConfigElem.getFirstChildWithName(getQNameWithIdentityNS(ConfigElements
+                        .REMOVE_ADDITIONAL_PARAMS_FROM_ERROR_URL));
+        if (removeAdditionalParamsFromErrorUrlElem != null) {
+            removeAdditionalParamsFromErrorUrl =
+                    Boolean.parseBoolean(removeAdditionalParamsFromErrorUrlElem.getText());
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Removing additional params from OAuth2 Error url is set to : " +
+                    removeAdditionalParamsFromErrorUrlElem);
+        }
+    }
+
     public OAuth2ScopeValidator getoAuth2ScopeValidator() {
         return oAuth2ScopeValidator;
     }
@@ -2750,6 +2775,7 @@ public class OAuthServerConfiguration {
         public static final String ENABLE_ASSERTIONS_USERNAME = "UserName";
         public static final String ENABLE_ACCESS_TOKEN_PARTITIONING = "EnableAccessTokenPartitioning";
         public static final String REDIRECT_TO_REQUESTED_REDIRECT_URI = "RedirectToRequestedRedirectUri";
+        public static final String REMOVE_ADDITIONAL_PARAMS_FROM_ERROR_URL = "RemoveAdditionalParamFromErrorUrl";
         public static final String ACCESS_TOKEN_PARTITIONING_DOMAINS = "AccessTokenPartitioningDomains";
         // OpenIDConnect configurations
         public static final String OPENID_CONNECT = "OpenIDConnect";
