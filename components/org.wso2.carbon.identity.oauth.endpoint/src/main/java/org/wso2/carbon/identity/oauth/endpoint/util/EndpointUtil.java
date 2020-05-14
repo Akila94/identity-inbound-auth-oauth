@@ -951,7 +951,7 @@ public class EndpointUtil {
 
         String isAllowAdditionalParamsEnabled = IdentityUtil.getProperty(ALLOW_ADDITIONAL_PARAMS_FROM_ERROR_URL);
 
-        if (isAllowAdditionalParamsEnabled != null) {
+        if (StringUtils.isNotBlank(isAllowAdditionalParamsEnabled)) {
             return Boolean.parseBoolean(isAllowAdditionalParamsEnabled);
         } else {
             return true;
@@ -969,7 +969,7 @@ public class EndpointUtil {
 
         // Verifying whether the error is redirecting to the redirect url by checking whether the constructed redirect
         // url contains the redirect url from the request if the params from request is not null and params from
-        // request contains redirect url
+        // request contains redirect url.
         return !(params != null && StringUtils.isNotBlank(params.getRedirectURI()) &&
                 StringUtils.startsWith(redirectURL, params.getRedirectURI()));
 
