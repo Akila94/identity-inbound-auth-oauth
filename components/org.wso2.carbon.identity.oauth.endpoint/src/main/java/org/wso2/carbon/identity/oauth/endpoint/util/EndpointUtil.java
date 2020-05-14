@@ -428,7 +428,7 @@ public class EndpointUtil {
 
         if (isAllowAdditionalParamsFromErrorUrlEnabled() || isRedirectToCommonErrorPage(params, redirectURL)) {
             //Appending additional parameters if the <AllowAdditionalParamsFromErrorUrl> config is enabled or
-            // the error is redirected to the common error page
+            // the error is redirected to the common error page.
             return getRedirectURL(redirectURL, request);
         } else {
             return redirectURL;
@@ -960,7 +960,7 @@ public class EndpointUtil {
      *
      * @param params       OAuth2Parameters
      * @param redirectURL  Constructed redirect URL
-     * @return Whether the error is redirected to the common error page (true or false)xx
+     * @return Whether the error is redirected to the common error page (true or false)
      */
     private static boolean isRedirectToCommonErrorPage(OAuth2Parameters params, String redirectURL) {
 
