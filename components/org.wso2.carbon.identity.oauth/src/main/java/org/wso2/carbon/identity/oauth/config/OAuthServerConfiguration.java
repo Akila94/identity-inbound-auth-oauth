@@ -400,7 +400,6 @@ public class OAuthServerConfiguration {
 
         // Read the property for error redirection URI.
         parseRedirectToOAuthErrorPageConfig(oauthElem);
-
     }
 
     private void parseTokenIntrospectionConfig(OMElement oauthElem) {
