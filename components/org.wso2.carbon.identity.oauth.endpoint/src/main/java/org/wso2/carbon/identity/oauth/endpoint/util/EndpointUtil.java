@@ -103,7 +103,6 @@ public class EndpointUtil {
     private static final String PROP_REDIRECT_URI = "redirect_uri";
     private static final String NOT_AVAILABLE = "N/A";
     private static final String UNKNOWN_ERROR = "unknown_error";
-
     private static final String ALLOW_ADDITIONAL_PARAMS_FROM_ERROR_URL = "OAuth.AllowAdditionalParamsFromErrorUrl";
 
     private EndpointUtil() {
@@ -425,7 +424,7 @@ public class EndpointUtil {
         }
 
         if (isAllowAdditionalParamsFromErrorUrlEnabled() || isRedirectToCommonErrorPage(params, redirectURL)) {
-            //Appending additional parameters if the <AllowAdditionalParamsFromErrorUrl> config is enabled or
+            // Appending additional parameters if the <AllowAdditionalParamsFromErrorUrl> config is enabled or
             // the error is redirected to the common error page.
             return getRedirectURL(redirectURL, request);
         } else {
@@ -950,7 +949,13 @@ public class EndpointUtil {
      */
     private static boolean isAllowAdditionalParamsFromErrorUrlEnabled() {
 
-        return Boolean.parseBoolean(IdentityUtil.getProperty(ALLOW_ADDITIONAL_PARAMS_FROM_ERROR_URL));
+        String isAllowAdditionalParamsEnabled = IdentityUtil.getProperty(ALLOW_ADDITIONAL_PARAMS_FROM_ERROR_URL);
+
+        if (isAllowAdditionalParamsEnabled != null) {
+            return Boolean.parseBoolean(isAllowAdditionalParamsEnabled);
+        } else {
+            return true;
+        }
     }
 
     /**
@@ -962,6 +967,9 @@ public class EndpointUtil {
      */
     private static boolean isRedirectToCommonErrorPage(OAuth2Parameters params, String redirectURL) {
 
+        // Verifying whether the error is redirecting to the redirect url by checking whether the constructed redirect
+        // url contains the redirect url from the request if the params from request is not null and params from
+        // request contains redirect url
         return !(params != null && StringUtils.isNotBlank(params.getRedirectURI()) &&
                 StringUtils.startsWith(redirectURL, params.getRedirectURI()));
 
