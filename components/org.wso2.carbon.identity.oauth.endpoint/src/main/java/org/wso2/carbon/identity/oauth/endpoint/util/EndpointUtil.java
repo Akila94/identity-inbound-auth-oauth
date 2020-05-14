@@ -106,7 +106,7 @@ public class EndpointUtil {
     private static final String NOT_AVAILABLE = "N/A";
     private static final String UNKNOWN_ERROR = "unknown_error";
 
-    public static final String REMOVE_ADDITIONAL_PARAMS_FROM_ERROR_URL = "OAuth.RemoveAdditionalParamFromErrorUrl";
+    private static final String ALLOW_ADDITIONAL_PARAMS_FROM_ERROR_URL = "OAuth.AllowAdditionalParamsFromErrorUrl";
 
     private EndpointUtil() {
 
@@ -425,16 +425,14 @@ public class EndpointUtil {
         if (request == null) {
             return redirectURL;
         }
-        // As per the spec [https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.1.2.6] removing additional
-        // params to avoid them appending to the error URL when error is redirected to Redirect URI
-        Boolean isRemoveAdditionalParamsFromErrorUrlEnabled =
-                Boolean.parseBoolean(IdentityUtil.getProperty(REMOVE_ADDITIONAL_PARAMS_FROM_ERROR_URL));
-        if (isRemoveAdditionalParamsFromErrorUrlEnabled && params != null
-                && StringUtils.isNotBlank(params.getRedirectURI())) {
-            request.removeAttribute(REQUEST_PARAM_SP);
-            request.removeAttribute(TENANT_DOMAIN);
+
+        if (isAllowAdditionalParamsFromErrorUrlEnabled() || isRedirectToCommonErrorPage(params, redirectURL)) {
+            //Appending additional parameters if the <AllowAdditionalParamsFromErrorUrl> config is enabled or
+            // the error is redirected to the common error page
+            return getRedirectURL(redirectURL, request);
+        } else {
+            return redirectURL;
         }
-        return getRedirectURL(redirectURL, request);
     }
 
     public static String getErrorRedirectURL(OAuthProblemException ex, OAuth2Parameters params) {
@@ -946,5 +944,28 @@ public class EndpointUtil {
             log.error("Server error occurred while building error redirect url for application: " + appName, e);
         }
         return updatedRedirectUri;
+    }
+
+    /**
+     * Method to retrieve the <AllowAdditionalParamsFromErrorUrl> config from the OAuth Configuration.
+     * @return Retrieved config (true or false)
+     */
+    private static boolean isAllowAdditionalParamsFromErrorUrlEnabled() {
+
+        return Boolean.parseBoolean(IdentityUtil.getProperty(ALLOW_ADDITIONAL_PARAMS_FROM_ERROR_URL));
+    }
+
+    /**
+     * Method to check whether the error is redirected to the common error page.
+     *
+     * @param params       OAuth2Parameters
+     * @param redirectURL  Constructed redirect URL
+     * @return Whether the error is redirected to the common error page (true or false)xx
+     */
+    private static boolean isRedirectToCommonErrorPage(OAuth2Parameters params, String redirectURL) {
+
+        return !(params != null && StringUtils.isNotBlank(params.getRedirectURI()) &&
+                StringUtils.startsWith(redirectURL, params.getRedirectURI()));
+
     }
 }
