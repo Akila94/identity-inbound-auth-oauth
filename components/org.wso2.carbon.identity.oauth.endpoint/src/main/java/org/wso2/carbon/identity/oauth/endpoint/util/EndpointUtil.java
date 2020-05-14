@@ -106,6 +106,8 @@ public class EndpointUtil {
     private static final String NOT_AVAILABLE = "N/A";
     private static final String UNKNOWN_ERROR = "unknown_error";
 
+    public static final String REMOVE_ADDITIONAL_PARAMS_FROM_ERROR_URL = "OAuth.RemoveAdditionalParamFromErrorUrl";
+
     private EndpointUtil() {
 
     }
@@ -425,7 +427,9 @@ public class EndpointUtil {
         }
         // As per the spec [https://openid.net/specs/openid-connect-core-1_0.html#rfc.section.3.1.2.6] removing additional
         // params to avoid them appending to the error URL when error is redirected to Redirect URI
-        if (OAuthServerConfiguration.getInstance().isRemoveAdditionalParamsFromErrorUrlEnabled() && params != null
+        Boolean isRemoveAdditionalParamsFromErrorUrlEnabled =
+                Boolean.parseBoolean(IdentityUtil.getProperty(REMOVE_ADDITIONAL_PARAMS_FROM_ERROR_URL));
+        if (isRemoveAdditionalParamsFromErrorUrlEnabled && params != null
                 && StringUtils.isNotBlank(params.getRedirectURI())) {
             request.removeAttribute(REQUEST_PARAM_SP);
             request.removeAttribute(TENANT_DOMAIN);
