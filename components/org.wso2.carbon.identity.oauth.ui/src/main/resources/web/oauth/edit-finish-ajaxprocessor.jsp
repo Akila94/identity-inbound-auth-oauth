@@ -90,7 +90,7 @@
 	ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE, request.getLocale());
 	OAuthConsumerAppDTO app = new OAuthConsumerAppDTO();
 
-    String spName = request.getParameter("application");
+    	String spName = request.getParameter("application");
 	boolean isError = false;
 
     try {
