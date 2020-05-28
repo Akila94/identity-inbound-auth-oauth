@@ -402,9 +402,12 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
         }
 
         String issuer = OAuth2Util.getIDTokenIssuer();
-        String useEntityIdAsIssuerInAccessToken =
-                IdentityUtil.getProperty(OIDC_USE_ENTITY_ID_AS_ISSUER_IN_ACCESS_TOKEN);
-        if (Boolean.parseBoolean(useEntityIdAsIssuerInAccessToken)) {
+        Boolean useEntityIdAsIssuerInAccessToken =
+                Boolean.parseBoolean(IdentityUtil.getProperty(OIDC_USE_ENTITY_ID_AS_ISSUER_IN_ACCESS_TOKEN));
+        if (useEntityIdAsIssuerInAccessToken) {
+            if (log.isDebugEnabled()) {
+                log.debug("Identity Provider Entity ID is set as issuer of the token.");
+            }
             issuer = OAuth2Util.getIdTokenIssuer(spTenantDomain);
         }
         long curTimeInMillis = Calendar.getInstance().getTimeInMillis();
