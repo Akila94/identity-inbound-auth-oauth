@@ -86,6 +86,8 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
     // To keep track of the expiry time provided in the original jwt assertion, when JWT grant type is used.
     private static final String EXPIRY_TIME_JWT = "EXPIRY_TIME_JWT";
 
+    private static final String OIDC_USE_ENTITY_ID_AS_ISSUER_IN_ACCESS_TOKEN = "OAuth.UseEntityIdAsIssuerInAccessToken";
+
     private static final Log log = LogFactory.getLog(JWTTokenIssuer.class);
 
     // We are keeping a private key map which will have private key for each tenant domain. We are keeping this as a
@@ -399,7 +401,12 @@ public class JWTTokenIssuer extends OauthTokenIssuerImpl {
             spTenantDomain = tokenReqMessageContext.getOauth2AccessTokenReqDTO().getTenantDomain();
         }
 
-        String issuer = OAuth2Util.getIdTokenIssuer(spTenantDomain);
+        String issuer = OAuth2Util.getIDTokenIssuer();
+        String useEntityIdAsIssuerInAccessToken =
+                IdentityUtil.getProperty(OIDC_USE_ENTITY_ID_AS_ISSUER_IN_ACCESS_TOKEN);
+        if (Boolean.parseBoolean(useEntityIdAsIssuerInAccessToken)) {
+            issuer = OAuth2Util.getIdTokenIssuer(spTenantDomain);
+        }
         long curTimeInMillis = Calendar.getInstance().getTimeInMillis();
 
         String sub = getAuthenticatedSubjectIdentifier(authAuthzReqMessageContext, tokenReqMessageContext);
