@@ -886,26 +886,11 @@ public class EndpointUtil {
     private static String retrieveStateForErrorURL(HttpServletRequest request, OAuth2Parameters oAuth2Parameters) {
 
         String state = null;
-        try {
-            if (oAuth2Parameters.getState() != null) {
-                state = oAuth2Parameters.getState();
-                if (log.isDebugEnabled()) {
-                    log.debug("Retrieved state value " + state + " from OAuth2Parameters.");
-                }
-            } else {
-                if (request.getParameter(OAuthConstants.OAuth20Params.REQUEST) != null) {
-                    JWTClaimsSet jwtClaimsSet = SignedJWT.parse(request.getParameter(OAuthConstants.OAuth20Params.REQUEST))
-                            .getJWTClaimsSet();
-                    if (jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE) != null) {
-                        state = jwtClaimsSet.getStringClaim(OAuthConstants.OAuth20Params.STATE);
-                        if (log.isDebugEnabled()) {
-                            log.debug("Retrieved state value " + state + " from request object.");
-                        }
-                    }
-                }
+        if (oAuth2Parameters.getState() != null) {
+            state = oAuth2Parameters.getState();
+            if (log.isDebugEnabled()) {
+                log.debug("Retrieved state value " + state + " from OAuth2Parameters.");
             }
-        } catch (ParseException e) {
-            log.error("Error occurred while parsing the signed message", e);
         }
 
         return state;
