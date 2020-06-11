@@ -1518,10 +1518,10 @@ public class OAuth2AuthzEndpoint {
             String redirectURI = validatePKCEParameters(oAuthMessage, validationResponse, pkceChallengeCode,
                     pkceChallengeMethod);
             if (redirectURI != null) {
-                params.setPkceCodeChallenge(pkceChallengeCode);
-                params.setPkceCodeChallengeMethod(pkceChallengeMethod);
                 return redirectURI;
             }
+            params.setPkceCodeChallenge(pkceChallengeCode);
+            params.setPkceCodeChallengeMethod(pkceChallengeMethod);
         }
 
         return null;
