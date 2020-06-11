@@ -1512,18 +1512,17 @@ public class OAuth2AuthzEndpoint {
             }
         }
 
-        String pkceChallengeCode = oAuthMessage.getOauthPKCECodeChallenge();
-        String pkceChallengeMethod = oAuthMessage.getOauthPKCECodeChallengeMethod();
-
         if (isPkceSupportEnabled()) {
+            String pkceChallengeCode = oAuthMessage.getOauthPKCECodeChallenge();
+            String pkceChallengeMethod = oAuthMessage.getOauthPKCECodeChallengeMethod();
             String redirectURI = validatePKCEParameters(oAuthMessage, validationResponse, pkceChallengeCode,
                     pkceChallengeMethod);
+            params.setPkceCodeChallenge(pkceChallengeCode);
+            params.setPkceCodeChallengeMethod(pkceChallengeMethod);
             if (redirectURI != null) {
                 return redirectURI;
             }
         }
-        params.setPkceCodeChallenge(pkceChallengeCode);
-        params.setPkceCodeChallengeMethod(pkceChallengeMethod);
 
         return null;
     }
