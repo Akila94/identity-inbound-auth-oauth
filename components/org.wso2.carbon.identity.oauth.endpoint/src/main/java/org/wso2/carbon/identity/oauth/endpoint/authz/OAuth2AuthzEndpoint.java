@@ -1517,9 +1517,9 @@ public class OAuth2AuthzEndpoint {
             String pkceChallengeMethod = oAuthMessage.getOauthPKCECodeChallengeMethod();
             String redirectURI = validatePKCEParameters(oAuthMessage, validationResponse, pkceChallengeCode,
                     pkceChallengeMethod);
-            params.setPkceCodeChallenge(pkceChallengeCode);
-            params.setPkceCodeChallengeMethod(pkceChallengeMethod);
             if (redirectURI != null) {
+                params.setPkceCodeChallenge(pkceChallengeCode);
+                params.setPkceCodeChallengeMethod(pkceChallengeMethod);
                 return redirectURI;
             }
         }
