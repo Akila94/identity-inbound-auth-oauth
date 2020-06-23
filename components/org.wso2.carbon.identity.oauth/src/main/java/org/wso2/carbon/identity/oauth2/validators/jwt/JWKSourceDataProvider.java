@@ -26,6 +26,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
+import org.wso2.carbon.identity.oauth2.cache.JWKSCache;
+import org.wso2.carbon.identity.oauth2.cache.JWKSCacheEntry;
+import org.wso2.carbon.identity.oauth2.cache.JWKSCacheKey;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -48,7 +51,6 @@ public class JWKSourceDataProvider {
     private static final Log log = LogFactory.getLog(JWKSourceDataProvider.class);
 
     private static JWKSourceDataProvider jwkSourceDataProvider = new JWKSourceDataProvider();
-    private Map<String, RemoteJWKSet<SecurityContext>> jwkSourceMap = new ConcurrentHashMap<>();
 
     private JWKSourceDataProvider() {
 
@@ -73,18 +75,24 @@ public class JWKSourceDataProvider {
      */
     public RemoteJWKSet<SecurityContext> getJWKSource(String jwksUri) throws MalformedURLException {
 
-        RemoteJWKSet<SecurityContext> jwkSet = jwkSourceMap.get(jwksUri);
+        JWKSCacheKey jwksCacheKey = new JWKSCacheKey(jwksUri);
+        JWKSCacheEntry jwksCacheEntry = JWKSCache.getInstance().getValueFromCache(jwksCacheKey);
+        RemoteJWKSet<SecurityContext> jwkSet = null;
+        if (jwksCacheEntry != null) {
+            jwkSet = jwksCacheEntry.getValue();
+            if (log.isDebugEnabled()) {
+                log.debug("Retrieving JWKS for " + jwksUri + " from cache.");
+            }
+        }
 
         if (jwkSet == null) {
             jwkSet = retrieveJWKSFromJWKSEndpoint(jwksUri);
-            jwkSourceMap.put(jwksUri, jwkSet);
+            JWKSCache.getInstance().addToCache(jwksCacheKey, new JWKSCacheEntry(jwkSet));
+            if (log.isDebugEnabled()) {
+                log.debug("Fetching JWKS from remote endpoint.");
+            }
         }
         return jwkSet;
-    }
-
-    public Map<String, RemoteJWKSet<SecurityContext>> getJwkSourceMap() {
-
-        return jwkSourceMap;
     }
 
     /**
@@ -96,9 +104,10 @@ public class JWKSourceDataProvider {
     public void refreshJWKSResource(String jwksUri) throws IdentityOAuth2Exception {
 
         try {
-            jwkSourceMap.remove(jwksUri);
+            JWKSCacheKey jwksCacheKey = new JWKSCacheKey(jwksUri);
+            JWKSCache.getInstance().clearCacheEntry(jwksCacheKey);
             RemoteJWKSet<SecurityContext> jwkSet = retrieveJWKSFromJWKSEndpoint(jwksUri);
-            jwkSourceMap.put(jwksUri, jwkSet);
+            JWKSCache.getInstance().addToCache(jwksCacheKey, new JWKSCacheEntry(jwkSet));
         } catch (MalformedURLException e) {
             throw new IdentityOAuth2Exception("Provided URI is malformed. jwks_uri: " + jwksUri, e);
         }
